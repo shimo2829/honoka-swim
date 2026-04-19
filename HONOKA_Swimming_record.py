@@ -48,7 +48,7 @@ def normalize_columns(df):
 # ---------------------------------------------------------
 # Excel 読み込み
 # ---------------------------------------------------------
-file_path = r"C:\Users\shimo\OneDrive\Desktop\穂果記録.xlsx"
+file_path = "穂果記録.xlsx"
 
 events = ["フリー", "バッタ", "ブレ", "バック"]
 event = st.selectbox("種目を選択してください", events)
