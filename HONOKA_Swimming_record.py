@@ -112,29 +112,6 @@ if filtered.empty:
     st.error(f"{event} の {distance}m（{course}）のデータがありません")
     st.stop()
 
-# ---------------------------------------------------------
-# ベストタイム（短水路・長水路を別々に計算）
-# ---------------------------------------------------------
-best_short = data[(data["距離"] == distance) & (data["長水路or短水路"] == "短水路")]
-best_long  = data[(data["距離"] == distance) & (data["長水路or短水路"] == "長水路")]
-
-st.subheader("ベストタイム（短水路）")
-if not best_short.empty:
-    t = best_short["タイム"].min()
-    d = best_short.loc[best_short["タイム"].idxmin(), "日付"]
-    st.write(f"ベストタイム：**{t} 秒**")
-    st.write(f"更新日：{d}")
-else:
-    st.write("データなし")
-
-st.subheader("ベストタイム（長水路）")
-if not best_long.empty:
-    t = best_long["タイム"].min()
-    d = best_long.loc[best_long["タイム"].idxmin(), "日付"]
-    st.write(f"ベストタイム：**{t} 秒**")
-    st.write(f"更新日：{d}")
-else:
-    st.write("データなし")
 
 # ---------------------------------------------------------
 # グラフ描画（全記録は1本の線＋点の色分け）
@@ -181,8 +158,26 @@ st.write(f"タイム：{latest['タイム']}")
 st.write(f"会場：{latest['会場']}")
 
 # ---------------------------------------------------------
-# ベストタイム
+# ベストタイム（短水路・長水路を別々に計算）
 # ---------------------------------------------------------
-st.subheader("ベストタイム")
-st.write(f"ベストタイム：**{best_time} 秒**")
-st.write(f"更新日：{best_date}")
+best_short = data[(data["距離"] == distance) & (data["長水路or短水路"] == "短水路")]
+best_long  = data[(data["距離"] == distance) & (data["長水路or短水路"] == "長水路")]
+
+st.subheader("ベストタイム（短水路）")
+if not best_short.empty:
+    t = best_short["タイム"].min()
+    d = best_short.loc[best_short["タイム"].idxmin(), "日付"]
+    st.write(f"ベストタイム：**{t} 秒**")
+    st.write(f"更新日：{d}")
+else:
+    st.write("データなし")
+
+st.subheader("ベストタイム（長水路）")
+if not best_long.empty:
+    t = best_long["タイム"].min()
+    d = best_long.loc[best_long["タイム"].idxmin(), "日付"]
+    st.write(f"ベストタイム：**{t} 秒**")
+    st.write(f"更新日：{d}")
+else:
+    st.write("データなし")
+
