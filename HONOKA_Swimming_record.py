@@ -1,6 +1,14 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
+
+# ---------------------------------------------------------
+# 日本語フォント設定（文字化け対策）
+# ---------------------------------------------------------
+font_path = "IPAexGothic.ttf"  # ← GitHub に置く
+font_manager.fontManager.addfont(font_path)
+plt.rcParams["font.family"] = "IPAexGothic"
 
 # ---------------------------------------------------------
 # ページ設定（スマホ対応）
@@ -92,7 +100,6 @@ course = st.selectbox("長水路／短水路を選択", ["長水路", "短水路
 # データ絞り込み
 # ---------------------------------------------------------
 if course == "全記録":
-    # 長水路・短水路の区別を無視して1本の線にする
     filtered = data[data["距離"] == distance].sort_values("日付")
 else:
     filtered = data[
@@ -120,8 +127,8 @@ ax.plot(filtered["日付"], filtered["タイム"], color="gray", linewidth=2)
 
 # 点の色分け：長水路→青、短水路→赤
 color_map = {
-    "長水路": "tab:blue",   # 長水路 → 青
-    "短水路": "tab:red"     # 短水路 → 赤
+    "長水路": "tab:blue",
+    "短水路": "tab:red"
 }
 
 for c in ["長水路", "短水路"]:
