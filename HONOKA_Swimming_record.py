@@ -118,7 +118,7 @@ fig, ax = plt.subplots(figsize=(10, 5))
 # 1本の線（全記録でも1本）
 ax.plot(filtered["日付"], filtered["タイム"], color="gray", linewidth=2)
 
-# 点の色分け：長水路（青）、短水路（赤）
+# 点の色分け：長水路→青、短水路→赤
 color_map = {
     "長水路": "tab:blue",   # 長水路 → 青
     "短水路": "tab:red"     # 短水路 → 赤
