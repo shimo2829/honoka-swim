@@ -25,14 +25,14 @@ if not st.session_state.authenticated:
 
     if pw == PASSWORD:
         st.session_state.authenticated = True
-        st.rerun()   # Streamlit 新仕様
+        st.rerun()
     elif pw != "":
         st.error("パスワードが違います")
 
     st.stop()
 
 # ---------------------------------------------------------
-# 認証後のタイトル（←ここを追加）
+# 認証後タイトル
 # ---------------------------------------------------------
 st.title("HONOKA Swimming Record Dashboard")
 
@@ -43,9 +43,9 @@ def normalize_columns(df):
     new_cols = []
     for col in df.columns:
         c = str(col)
-        c = c.replace(" ", "")        # 半角スペース除去
-        c = c.replace("　", "")       # 全角スペース除去
-        c = c.replace("ヒヅケ", "日付")  # カタカナ揺れ → 日付に統一
+        c = c.replace(" ", "")
+        c = c.replace("　", "")
+        c = c.replace("ヒヅケ", "日付")
         new_cols.append(c)
     df.columns = new_cols
     return df
@@ -58,7 +58,6 @@ file_path = "穂果記録.xlsx"
 events = ["フリー", "バッタ", "ブレ", "バック"]
 event = st.selectbox("種目を選択してください", events)
 
-# シート名は種目だけ
 sheet_name = event
 
 # ---------------------------------------------------------
@@ -79,23 +78,26 @@ for col in required:
         st.stop()
 
 # ---------------------------------------------------------
-# 距離フィルタ（C列）
+# 距離フィルタ
 # ---------------------------------------------------------
 distance_list = sorted(data["距離"].unique())
 distance = st.selectbox("距離を選択してください", distance_list)
 
 # ---------------------------------------------------------
-# 長水路／短水路フィルタ（D列）
+# 長水路／短水路／全記録フィルタ
 # ---------------------------------------------------------
-course = st.selectbox("長水路／短水路を選択", ["長水路", "短水路"])
+course = st.selectbox("長水路／短水路を選択", ["長水路", "短水路", "全記録"])
 
 # ---------------------------------------------------------
 # データ絞り込み
 # ---------------------------------------------------------
-filtered = data[
-    (data["距離"] == distance) &
-    (data["長水路or短水路"] == course)
-]
+if course == "全記録":
+    filtered = data[data["距離"] == distance]
+else:
+    filtered = data[
+        (data["距離"] == distance) &
+        (data["長水路or短水路"] == course)
+    ]
 
 if filtered.empty:
     st.error(f"{event} の {distance}m（{course}）のデータがありません")
@@ -111,7 +113,18 @@ best_date = filtered.loc[filtered["タイム"].idxmin(), "日付"]
 # グラフ描画
 # ---------------------------------------------------------
 fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(filtered["日付"], filtered["タイム"], marker="o")
+
+if course == "全記録":
+    # 長水路・短水路を色分け
+    for c, label in [("長水路", "長水路"), ("短水路", "短水路")]:
+        df_c = filtered[filtered["長水路or短水路"] == c]
+        if not df_c.empty:
+            ax.plot(df_c["日付"], df_c["タイム"], marker="o", label=label)
+
+    ax.legend()
+else:
+    ax.plot(filtered["日付"], filtered["タイム"], marker="o")
+
 ax.set_xlabel("日付")
 ax.set_ylabel("タイム")
 ax.set_title(f"{event} {distance}m（{course}）の記録推移")
