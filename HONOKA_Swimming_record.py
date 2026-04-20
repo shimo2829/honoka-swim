@@ -2,11 +2,12 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
+import os
 
 # ---------------------------------------------------------
 # 日本語フォント設定（文字化け対策）
 # ---------------------------------------------------------
-font_path = "IPAexGothic.ttf"  # ← GitHub に置く
+font_path = os.path.join(os.path.dirname(__file__), "ipaexg.ttf")
 font_manager.fontManager.addfont(font_path)
 plt.rcParams["font.family"] = "IPAexGothic"
 
