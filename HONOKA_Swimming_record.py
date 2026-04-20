@@ -110,18 +110,27 @@ best_time = filtered["タイム"].min()
 best_date = filtered.loc[filtered["タイム"].idxmin(), "日付"]
 
 # ---------------------------------------------------------
-# グラフ描画
+# グラフ描画（単軸・色分け）
 # ---------------------------------------------------------
 fig, ax = plt.subplots(figsize=(10, 5))
 
 if course == "全記録":
-    # 長水路・短水路を色分け
-    for c, label in [("長水路", "長水路"), ("短水路", "短水路")]:
+    # 色設定
+    color_map = {"長水路": "tab:blue", "短水路": "tab:red"}
+
+    for c in ["長水路", "短水路"]:
         df_c = filtered[filtered["長水路or短水路"] == c]
         if not df_c.empty:
-            ax.plot(df_c["日付"], df_c["タイム"], marker="o", label=label)
+            ax.plot(
+                df_c["日付"],
+                df_c["タイム"],
+                marker="o",
+                label=c,
+                color=color_map[c]
+            )
 
     ax.legend()
+
 else:
     ax.plot(filtered["日付"], filtered["タイム"], marker="o")
 
