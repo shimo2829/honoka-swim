@@ -92,12 +92,13 @@ course = st.selectbox("長水路／短水路を選択", ["長水路", "短水路
 # データ絞り込み
 # ---------------------------------------------------------
 if course == "全記録":
-    filtered = data[data["距離"] == distance]
+    # 長水路・短水路の区別を無視して1本の線にする
+    filtered = data[data["距離"] == distance].sort_values("日付")
 else:
     filtered = data[
         (data["距離"] == distance) &
         (data["長水路or短水路"] == course)
-    ]
+    ].sort_values("日付")
 
 if filtered.empty:
     st.error(f"{event} の {distance}m（{course}）のデータがありません")
@@ -110,34 +111,35 @@ best_time = filtered["タイム"].min()
 best_date = filtered.loc[filtered["タイム"].idxmin(), "日付"]
 
 # ---------------------------------------------------------
-# グラフ描画（単軸・色分け）
+# グラフ描画（全記録は1本の線＋点の色分け）
 # ---------------------------------------------------------
 fig, ax = plt.subplots(figsize=(10, 5))
 
-if course == "全記録":
-    # 色設定
-    color_map = {"長水路": "tab:blue", "短水路": "tab:red"}
+# 1本の線（全記録でも1本）
+ax.plot(filtered["日付"], filtered["タイム"], color="gray", linewidth=2)
 
-    for c in ["長水路", "短水路"]:
-        df_c = filtered[filtered["長水路or短水路"] == c]
-        if not df_c.empty:
-            ax.plot(
-                df_c["日付"],
-                df_c["タイム"],
-                marker="o",
-                label=c,
-                color=color_map[c]
-            )
+# 点の色分け（長水路＝青、短水路＝赤）
+color_map = {"長水路": "tab:blue", "短水路": "tab:red"}
 
-    ax.legend()
-
-else:
-    ax.plot(filtered["日付"], filtered["タイム"], marker="o")
+for c in ["長水路", "短水路"]:
+    df_c = filtered[filtered["長水路or短水路"] == c]
+    if not df_c.empty:
+        ax.scatter(
+            df_c["日付"],
+            df_c["タイム"],
+            color=color_map[c],
+            label=c,
+            s=60
+        )
 
 ax.set_xlabel("日付")
 ax.set_ylabel("タイム")
 ax.set_title(f"{event} {distance}m（{course}）の記録推移")
 ax.grid(True)
+
+if course == "全記録":
+    ax.legend()
+
 st.pyplot(fig)
 
 # ---------------------------------------------------------
