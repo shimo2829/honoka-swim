@@ -208,7 +208,7 @@ for c in ["長水路", "短水路"]:
         )
 
 # ---------------------------------------------------------
-# Y軸は「秒の10秒刻み」に戻す
+# Y軸：10秒刻みの太線
 # ---------------------------------------------------------
 y_min = int(filtered["タイム"].min() // 10 * 10)
 y_max = int(filtered["タイム"].max() // 10 * 10 + 10)
@@ -216,6 +216,12 @@ y_max = int(filtered["タイム"].max() // 10 * 10 + 10)
 ax.set_ylim(y_min, y_max)
 ax.set_yticks(range(y_min, y_max + 1, 10))
 ax.set_yticklabels([f"{t} 秒" for t in range(y_min, y_max + 1, 10)])
+
+# ---------------------------------------------------------
+# Y軸：1秒刻みの薄い補助線
+# ---------------------------------------------------------
+ax.set_yticks([t for t in range(y_min, y_max + 1, 1)], minor=True)
+ax.grid(which="minor", linestyle="--", linewidth=0.3, alpha=0.5)
 
 ax.set_xlabel("日付")
 ax.set_ylabel("タイム（秒）")
