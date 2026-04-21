@@ -60,6 +60,34 @@ def normalize_columns(df):
     return df
 
 # ---------------------------------------------------------
+# タイムを秒に変換する関数
+# ---------------------------------------------------------
+def time_to_seconds(t):
+    t = str(t)
+
+    # 例: 1'41"11
+    if "'" in t:
+        minute, rest = t.split("'")
+        rest = rest.replace('"', "")
+        if "." in rest:
+            second, ms = rest.split(".")
+        else:
+            second, ms = rest, "0"
+        return int(minute) * 60 + int(second) + int(ms) / 100
+
+    # 例: 1:41.11
+    if ":" in t:
+        minute, rest = t.split(":")
+        second, ms = rest.split(".")
+        return int(minute) * 60 + int(second) + int(ms) / 100
+
+    # 例: 101.11（秒のみ）
+    try:
+        return float(t)
+    except:
+        return None
+
+# ---------------------------------------------------------
 # Excel 読み込み
 # ---------------------------------------------------------
 file_path = "穂果記録.xlsx"
@@ -87,6 +115,16 @@ for col in required:
         st.stop()
 
 # ---------------------------------------------------------
+# タイム列を秒に変換（ここが今回の修正ポイント）
+# ---------------------------------------------------------
+data["タイム"] = data["タイム"].apply(time_to_seconds)
+
+if data["タイム"].isnull().any():
+    st.error("タイムの変換に失敗したデータがあります。Excel のタイム表記を確認してください。")
+    st.write(data[data["タイム"].isnull()])
+    st.stop()
+
+# ---------------------------------------------------------
 # 距離フィルタ
 # ---------------------------------------------------------
 distance_list = sorted(data["距離"].unique())
@@ -111,7 +149,6 @@ else:
 if filtered.empty:
     st.error(f"{event} の {distance}m（{course}）のデータがありません")
     st.stop()
-
 
 # ---------------------------------------------------------
 # グラフ描画（全記録は1本の線＋点の色分け）
@@ -139,7 +176,7 @@ for c in ["長水路", "短水路"]:
         )
 
 ax.set_xlabel("日付")
-ax.set_ylabel("タイム")
+ax.set_ylabel("タイム（秒）")
 ax.set_title(f"{event} {distance}m（{course}）の記録推移")
 ax.grid(True)
 
@@ -154,7 +191,7 @@ st.pyplot(fig)
 latest = filtered.iloc[-1]
 st.subheader("最新の記録")
 st.write(f"日付：{latest['日付']}")
-st.write(f"タイム：{latest['タイム']}")
+st.write(f"タイム：{latest['タイム']} 秒")
 st.write(f"会場：{latest['会場']}")
 
 # ---------------------------------------------------------
@@ -180,4 +217,3 @@ if not best_long.empty:
     st.write(f"更新日：{d}")
 else:
     st.write("データなし")
-
