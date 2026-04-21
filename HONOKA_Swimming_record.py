@@ -207,12 +207,18 @@ for c in ["長水路", "短水路"]:
             s=60
         )
 
-# Y軸を競技タイム表記に変換
-ax.set_yticks(filtered["タイム"])
-ax.set_yticklabels([seconds_to_competition_time(t) for t in filtered["タイム"]])
+# ---------------------------------------------------------
+# Y軸は「秒の10秒刻み」に戻す
+# ---------------------------------------------------------
+y_min = int(filtered["タイム"].min() // 10 * 10)
+y_max = int(filtered["タイム"].max() // 10 * 10 + 10)
+
+ax.set_ylim(y_min, y_max)
+ax.set_yticks(range(y_min, y_max + 1, 10))
+ax.set_yticklabels([f"{t} 秒" for t in range(y_min, y_max + 1, 10)])
 
 ax.set_xlabel("日付")
-ax.set_ylabel("タイム（競技表記）")
+ax.set_ylabel("タイム（秒）")
 ax.set_title(f"{event} {distance}m（{course}）の記録推移")
 ax.grid(True)
 
