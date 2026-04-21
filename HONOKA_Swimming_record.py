@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 import os
+import re
 
 # ---------------------------------------------------------
 # 日本語フォント設定（文字化け対策）
@@ -60,28 +61,46 @@ def normalize_columns(df):
     return df
 
 # ---------------------------------------------------------
-# タイムを秒に変換する関数
+# タイムを秒に変換（全パターン対応）
 # ---------------------------------------------------------
 def time_to_seconds(t):
-    t = str(t)
+    if t is None:
+        return None
 
-    # 例: 1'41"11
-    if "'" in t:
-        minute, rest = t.split("'")
-        rest = rest.replace('"', "")
-        if "." in rest:
-            second, ms = rest.split(".")
-        else:
-            second, ms = rest, "0"
-        return int(minute) * 60 + int(second) + int(ms) / 100
+    t = str(t).strip()
 
-    # 例: 1:41.11
-    if ":" in t:
-        minute, rest = t.split(":")
-        second, ms = rest.split(".")
-        return int(minute) * 60 + int(second) + int(ms) / 100
+    if t == "" or t.lower() == "nan":
+        return None
 
-    # 例: 101.11（秒のみ）
+    # 全角 → 半角
+    t = t.replace("’", "'").replace("‘", "'")
+    t = t.replace("“", '"').replace("”", '"')
+
+    # ① 競技表記 1'41"11
+    match = re.match(r"(\d+)'(\d+)" + r'"' + r"(\d+)", t)
+    if match:
+        m, s, ms = match.groups()
+        return int(m) * 60 + int(s) + int(ms) / 100
+
+    # ② コロン表記 1:41.11
+    match = re.match(r"(\d+):(\d+)\.(\d+)", t)
+    if match:
+        m, s, ms = match.groups()
+        return int(m) * 60 + int(s) + int(ms) / 100
+
+    # ③ コロン表記（小数なし）1:41
+    match = re.match(r"(\d+):(\d+)$", t)
+    if match:
+        m, s = match.groups()
+        return int(m) * 60 + int(s)
+
+    # ④ 日本語表記 1分41秒11
+    match = re.match(r"(\d+)分(\d+)秒(\d+)", t)
+    if match:
+        m, s, ms = match.groups()
+        return int(m) * 60 + int(s) + int(ms) / 100
+
+    # ⑤ 秒のみ 101.11
     try:
         return float(t)
     except:
