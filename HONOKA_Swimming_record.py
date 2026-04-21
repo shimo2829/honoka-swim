@@ -62,6 +62,15 @@ def normalize_columns(df):
     return df
 
 # ---------------------------------------------------------
+# 秒 → 競技タイム表記（1'41"11）
+# ---------------------------------------------------------
+def seconds_to_competition_time(sec):
+    m = int(sec // 60)
+    s = int(sec % 60)
+    ms = int(round((sec - int(sec)) * 100))
+    return f"{m}'{s:02d}\"{ms:02d}"
+
+# ---------------------------------------------------------
 # タイムを秒に変換（Excel時刻型にも完全対応）
 # ---------------------------------------------------------
 def time_to_seconds(t):
@@ -198,8 +207,12 @@ for c in ["長水路", "短水路"]:
             s=60
         )
 
+# Y軸を競技タイム表記に変換
+ax.set_yticks(filtered["タイム"])
+ax.set_yticklabels([seconds_to_competition_time(t) for t in filtered["タイム"]])
+
 ax.set_xlabel("日付")
-ax.set_ylabel("タイム（秒）")
+ax.set_ylabel("タイム（競技表記）")
 ax.set_title(f"{event} {distance}m（{course}）の記録推移")
 ax.grid(True)
 
@@ -214,7 +227,7 @@ st.pyplot(fig)
 latest = filtered.iloc[-1]
 st.subheader("最新の記録")
 st.write(f"日付：{latest['日付']}")
-st.write(f"タイム：{latest['タイム']} 秒")
+st.write(f"タイム：{seconds_to_competition_time(latest['タイム'])}")
 st.write(f"会場：{latest['会場']}")
 
 # ---------------------------------------------------------
@@ -227,7 +240,7 @@ st.subheader("ベストタイム（短水路）")
 if not best_short.empty:
     t = best_short["タイム"].min()
     d = best_short.loc[best_short["タイム"].idxmin(), "日付"]
-    st.write(f"ベストタイム：**{t} 秒**")
+    st.write(f"ベストタイム：**{seconds_to_competition_time(t)}**")
     st.write(f"更新日：{d}")
 else:
     st.write("データなし")
@@ -236,7 +249,7 @@ st.subheader("ベストタイム（長水路）")
 if not best_long.empty:
     t = best_long["タイム"].min()
     d = best_long.loc[best_long["タイム"].idxmin(), "日付"]
-    st.write(f"ベストタイム：**{t} 秒**")
+    st.write(f"ベストタイム：**{seconds_to_competition_time(t)}**")
     st.write(f"更新日：{d}")
 else:
     st.write("データなし")
