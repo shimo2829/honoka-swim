@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib import font_manager
 import os
 import re
+import datetime
 
 # ---------------------------------------------------------
 # 日本語フォント設定（文字化け対策）
@@ -61,11 +62,18 @@ def normalize_columns(df):
     return df
 
 # ---------------------------------------------------------
-# タイムを秒に変換（全パターン対応）
+# タイムを秒に変換（Excel時刻型にも完全対応）
 # ---------------------------------------------------------
 def time_to_seconds(t):
     if t is None:
         return None
+
+    # Excel の時刻型（datetime.time / datetime.datetime）
+    if isinstance(t, datetime.time):
+        return t.hour * 3600 + t.minute * 60 + t.second + t.microsecond / 1e6
+
+    if isinstance(t, datetime.datetime):
+        return t.hour * 3600 + t.minute * 60 + t.second + t.microsecond / 1e6
 
     t = str(t).strip()
 
@@ -134,14 +142,12 @@ for col in required:
         st.stop()
 
 # ---------------------------------------------------------
-# タイム列を秒に変換（ここが今回の修正ポイント）
+# タイム列を秒に変換
 # ---------------------------------------------------------
 data["タイム"] = data["タイム"].apply(time_to_seconds)
 
-if data["タイム"].isnull().any():
-    st.error("タイムの変換に失敗したデータがあります。Excel のタイム表記を確認してください。")
-    st.write(data[data["タイム"].isnull()])
-    st.stop()
+# 変換できなかった行を除外（空欄・不正値対策）
+data = data.dropna(subset=["タイム"])
 
 # ---------------------------------------------------------
 # 距離フィルタ
@@ -170,14 +176,12 @@ if filtered.empty:
     st.stop()
 
 # ---------------------------------------------------------
-# グラフ描画（全記録は1本の線＋点の色分け）
+# グラフ描画
 # ---------------------------------------------------------
 fig, ax = plt.subplots(figsize=(10, 5))
 
-# 1本の線（全記録でも1本）
 ax.plot(filtered["日付"], filtered["タイム"], color="gray", linewidth=2)
 
-# 点の色分け：長水路→青、短水路→赤
 color_map = {
     "長水路": "tab:blue",
     "短水路": "tab:red"
@@ -214,7 +218,7 @@ st.write(f"タイム：{latest['タイム']} 秒")
 st.write(f"会場：{latest['会場']}")
 
 # ---------------------------------------------------------
-# ベストタイム（短水路・長水路を別々に計算）
+# ベストタイム（短水路・長水路）
 # ---------------------------------------------------------
 best_short = data[(data["距離"] == distance) & (data["長水路or短水路"] == "短水路")]
 best_long  = data[(data["距離"] == distance) & (data["長水路or短水路"] == "長水路")]
