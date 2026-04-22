@@ -77,7 +77,6 @@ def time_to_seconds(t):
     if t is None:
         return None
 
-    # Excel の時刻型（datetime.time / datetime.datetime）
     if isinstance(t, datetime.time):
         return t.hour * 3600 + t.minute * 60 + t.second + t.microsecond / 1e6
 
@@ -89,35 +88,29 @@ def time_to_seconds(t):
     if t == "" or t.lower() == "nan":
         return None
 
-    # 全角 → 半角
     t = t.replace("’", "'").replace("‘", "'")
     t = t.replace("“", '"').replace("”", '"')
 
-    # ① 競技表記 1'41"11
     match = re.match(r"(\d+)'(\d+)" + r'"' + r"(\d+)", t)
     if match:
         m, s, ms = match.groups()
         return int(m) * 60 + int(s) + int(ms) / 100
 
-    # ② コロン表記 1:41.11
     match = re.match(r"(\d+):(\d+)\.(\d+)", t)
     if match:
         m, s, ms = match.groups()
         return int(m) * 60 + int(s) + int(ms) / 100
 
-    # ③ コロン表記（小数なし）1:41
     match = re.match(r"(\d+):(\d+)$", t)
     if match:
         m, s = match.groups()
         return int(m) * 60 + int(s)
 
-    # ④ 日本語表記 1分41秒11
     match = re.match(r"(\d+)分(\d+)秒(\d+)", t)
     if match:
         m, s, ms = match.groups()
         return int(m) * 60 + int(s) + int(ms) / 100
 
-    # ⑤ 秒のみ 101.11
     try:
         return float(t)
     except:
@@ -128,7 +121,7 @@ def time_to_seconds(t):
 # ---------------------------------------------------------
 file_path = "穂果記録.xlsx"
 
-events = ["フリー", "バッタ", "ブレ", "バック"]
+events = ["フリー", "バッタ", "ブレ", "バック", "メドレー"]
 event = st.selectbox("種目を選択してください", events)
 
 sheet_name = event
@@ -154,14 +147,16 @@ for col in required:
 # タイム列を秒に変換
 # ---------------------------------------------------------
 data["タイム"] = data["タイム"].apply(time_to_seconds)
-
-# 変換できなかった行を除外（空欄・不正値対策）
 data = data.dropna(subset=["タイム"])
 
 # ---------------------------------------------------------
-# 距離フィルタ
+# 距離フィルタ（メドレーだけ特別ルール）
 # ---------------------------------------------------------
-distance_list = sorted(data["距離"].unique())
+if event == "メドレー":
+    distance_list = [100, 200, 400]
+else:
+    distance_list = sorted(data["距離"].unique())
+
 distance = st.selectbox("距離を選択してください", distance_list)
 
 # ---------------------------------------------------------
@@ -207,9 +202,6 @@ for c in ["長水路", "短水路"]:
             s=60
         )
 
-# ---------------------------------------------------------
-# Y軸：10秒刻みの太線
-# ---------------------------------------------------------
 y_min = int(filtered["タイム"].min() // 10 * 10)
 y_max = int(filtered["タイム"].max() // 10 * 10 + 10)
 
@@ -217,9 +209,6 @@ ax.set_ylim(y_min, y_max)
 ax.set_yticks(range(y_min, y_max + 1, 10))
 ax.set_yticklabels([f"{t} 秒" for t in range(y_min, y_max + 1, 10)])
 
-# ---------------------------------------------------------
-# Y軸：1秒刻みの薄い補助線
-# ---------------------------------------------------------
 ax.set_yticks([t for t in range(y_min, y_max + 1, 1)], minor=True)
 ax.grid(which="minor", linestyle="--", linewidth=0.3, alpha=0.5)
 
@@ -265,3 +254,4 @@ if not best_long.empty:
     st.write(f"更新日：{d}")
 else:
     st.write("データなし")
+
