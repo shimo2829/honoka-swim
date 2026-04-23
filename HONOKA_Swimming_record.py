@@ -115,7 +115,7 @@ def time_to_seconds(t):
     return None
 
 # ---------------------------------------------------------
-# Excel 読み込み（dtype=str を使わない）
+# Excel 読み込み（G列以降を強制無視）
 # ---------------------------------------------------------
 file_path = "穂果記録.xlsx"
 
@@ -124,7 +124,10 @@ event = st.selectbox("種目を選択してください", events)
 
 sheet_name = event
 
-data = pd.read_excel(file_path, sheet_name=sheet_name, usecols="A:F")
+# ★ G列以降を完全無視する
+data = pd.read_excel(file_path, sheet_name=sheet_name)
+data = data.iloc[:, :6]   # ← A〜F列だけ残す
+
 data = normalize_columns(data)
 
 # ---------------------------------------------------------
@@ -138,7 +141,7 @@ for col in required:
         st.stop()
 
 # ---------------------------------------------------------
-# 日付（Excel日付型）を datetime に統一
+# 日付を datetime に統一
 # ---------------------------------------------------------
 data["日付"] = pd.to_datetime(data["日付"], errors="coerce")
 
@@ -180,7 +183,7 @@ data = data.dropna(subset=["日付", "距離", "タイム"])
 # 距離フィルタ
 # ---------------------------------------------------------
 if event == "メドレー":
-    distance_list = [200, 400]
+    distance_list = [100, 200, 400]
 else:
     distance_list = sorted(data["距離"].unique())
 
@@ -189,7 +192,7 @@ distance = st.selectbox("距離を選択してください", distance_list)
 # ---------------------------------------------------------
 # 長水路／短水路／全記録
 # ---------------------------------------------------------
-course = st.selectbox("短水路／長水路を選択", ["短水路", "長水路", "全記録"])
+course = st.selectbox("長水路／短水路を選択", ["長水路", "短水路", "全記録"])
 
 # ---------------------------------------------------------
 # データ絞り込み
