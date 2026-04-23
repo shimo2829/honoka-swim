@@ -80,53 +80,57 @@ def seconds_to_competition_time(sec):
     return f"{m}'{s:02d}\"{ms:02d}"
 
 # ---------------------------------------------------------
+# Y軸用：秒 → 分:秒
+# ---------------------------------------------------------
+def sec_to_minsec(sec):
+    m = int(sec // 60)
+    s = int(sec % 60)
+    return f"{m}:{s:02d}"
+
+# ---------------------------------------------------------
 # タイムを秒に変換（Excel時刻型にも完全対応）
 # ---------------------------------------------------------
 def time_to_seconds(t):
     if t is None:
         return None
 
-    if isinstance(t, datetime.time):
-        return t.hour * 3600 + t.minute * 60 + t.second + t.microsecond / 1e6
-
-    if isinstance(t, datetime.datetime):
-        return t.hour * 3600 + t.minute * 60 + t.second + t.microsecond / 1e6
-
     t = str(t).strip()
 
     if t == "" or t.lower() == "nan":
         return None
 
+    # 全角 → 半角
     t = t.replace("’", "'").replace("‘", "'")
     t = t.replace("“", '"').replace("”", '"')
 
+    # 競技タイム 3'14"47
     match = re.match(r"(\d+)'(\d+)" + r'"' + r"(\d+)", t)
     if match:
         m, s, ms = match.groups()
         return int(m) * 60 + int(s) + int(ms) / 100
 
+    # mm:ss.xx
     match = re.match(r"(\d+):(\d+)\.(\d+)", t)
     if match:
         m, s, ms = match.groups()
         return int(m) * 60 + int(s) + int(ms) / 100
 
+    # mm:ss
     match = re.match(r"(\d+):(\d+)$", t)
     if match:
         m, s = match.groups()
         return int(m) * 60 + int(s)
 
+    # 3分14秒47
     match = re.match(r"(\d+)分(\d+)秒(\d+)", t)
     if match:
         m, s, ms = match.groups()
         return int(m) * 60 + int(s) + int(ms) / 100
 
-    try:
-        return float(t)
-    except:
-        return None
+    return None
 
 # ---------------------------------------------------------
-# Excel 読み込み
+# Excel 読み込み（タイム列を文字列で読む → 丸め誤差ゼロ）
 # ---------------------------------------------------------
 file_path = "穂果記録.xlsx"
 
@@ -135,10 +139,7 @@ event = st.selectbox("種目を選択してください", events)
 
 sheet_name = event
 
-# ---------------------------------------------------------
-# データ読み込み（A〜F列）
-# ---------------------------------------------------------
-data = pd.read_excel(file_path, sheet_name=sheet_name, usecols="A:F")
+data = pd.read_excel(file_path, sheet_name=sheet_name, usecols="A:F", dtype=str)
 data = normalize_columns(data)
 
 # ---------------------------------------------------------
@@ -162,20 +163,22 @@ data = data.dropna(subset=["タイム"])
 # 距離フィルタ（メドレーだけ特別ルール）
 # ---------------------------------------------------------
 if event == "メドレー":
-    distance_list = [200, 400]
+    distance_list = [100, 200, 400]
 else:
-    distance_list = sorted(data["距離"].unique())
+    distance_list = sorted(data["距離"].astype(int).unique())
 
 distance = st.selectbox("距離を選択してください", distance_list)
 
 # ---------------------------------------------------------
 # 長水路／短水路／全記録フィルタ
 # ---------------------------------------------------------
-course = st.selectbox("長水路／短水路を選択", ["短水路", "長水路", "全記録"])
+course = st.selectbox("長水路／短水路を選択", ["長水路", "短水路", "全記録"])
 
 # ---------------------------------------------------------
 # データ絞り込み
 # ---------------------------------------------------------
+data["距離"] = data["距離"].astype(int)
+
 if course == "全記録":
     filtered = data[data["距離"] == distance].sort_values("日付")
 else:
@@ -189,7 +192,7 @@ if filtered.empty:
     st.stop()
 
 # ---------------------------------------------------------
-# グラフ描画
+# グラフ描画（Y軸：分:秒）
 # ---------------------------------------------------------
 fig, ax = plt.subplots(figsize=(10, 5))
 
@@ -216,13 +219,13 @@ y_max = int(filtered["タイム"].max() // 10 * 10 + 10)
 
 ax.set_ylim(y_min, y_max)
 ax.set_yticks(range(y_min, y_max + 1, 10))
-ax.set_yticklabels([f"{t} 秒" for t in range(y_min, y_max + 1, 10)])
+ax.set_yticklabels([sec_to_minsec(t) for t in range(y_min, y_max + 1, 10)])
 
 ax.set_yticks([t for t in range(y_min, y_max + 1, 1)], minor=True)
 ax.grid(which="minor", linestyle="--", linewidth=0.3, alpha=0.5)
 
 ax.set_xlabel("日付")
-ax.set_ylabel("タイム（秒）")
+ax.set_ylabel("タイム（分:秒）")
 ax.set_title(f"{event} {distance}m（{course}）の記録推移")
 ax.grid(True)
 
@@ -239,8 +242,6 @@ latest = filtered.iloc[-1]
 st.subheader("最新の記録")
 st.write(f"日付：{latest['日付']}")
 st.write(f"タイム：{seconds_to_competition_time(latest['タイム'])}")
-
-# 会場が欠損・不可視文字・列名揺れでも落ちない
 st.write(f"会場：{latest.get('会場', '―')}")
 
 # ---------------------------------------------------------
