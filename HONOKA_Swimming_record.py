@@ -7,14 +7,14 @@ import re
 import datetime
 
 # ---------------------------------------------------------
-# 日本語フォント設定（文字化け対策）
+# 日本語フォント設定
 # ---------------------------------------------------------
 font_path = os.path.join(os.path.dirname(__file__), "ipaexg.ttf")
 font_manager.fontManager.addfont(font_path)
 plt.rcParams["font.family"] = "IPAexGothic"
 
 # ---------------------------------------------------------
-# ページ設定（スマホ対応）
+# ページ設定
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="穂果 Swimming Record Dashboard",
@@ -48,30 +48,21 @@ if not st.session_state.authenticated:
 st.title("HONOKA Swimming Record Dashboard")
 
 # ---------------------------------------------------------
-# 列名を正規化（揺れ・不可視文字対策）
+# 列名正規化
 # ---------------------------------------------------------
 def normalize_columns(df):
     new_cols = []
     for col in df.columns:
         c = str(col)
-
-        # 半角・全角スペース除去
-        c = c.replace(" ", "")
-        c = c.replace("　", "")
-
-        # 不可視文字（ゼロ幅スペースなど）除去
+        c = c.replace(" ", "").replace("　", "")
         c = re.sub(r"[\u200B-\u200F\uFEFF]", "", c)
-
-        # 列名ゆれ修正
         c = c.replace("ヒヅケ", "日付")
-
         new_cols.append(c)
-
     df.columns = new_cols
     return df
 
 # ---------------------------------------------------------
-# 秒 → 競技タイム表記（1'41"11）
+# 秒 → 競技タイム表記
 # ---------------------------------------------------------
 def seconds_to_competition_time(sec):
     m = int(sec // 60)
@@ -88,40 +79,34 @@ def sec_to_minsec(sec):
     return f"{m}:{s:02d}"
 
 # ---------------------------------------------------------
-# タイムを秒に変換（Excel時刻型にも完全対応）
+# タイムを秒に変換
 # ---------------------------------------------------------
 def time_to_seconds(t):
     if t is None:
         return None
 
     t = str(t).strip()
-
     if t == "" or t.lower() == "nan":
         return None
 
-    # 全角 → 半角
     t = t.replace("’", "'").replace("‘", "'")
     t = t.replace("“", '"').replace("”", '"')
 
-    # 競技タイム 3'14"47
     match = re.match(r"(\d+)'(\d+)" + r'"' + r"(\d+)", t)
     if match:
         m, s, ms = match.groups()
         return int(m) * 60 + int(s) + int(ms) / 100
 
-    # mm:ss.xx
     match = re.match(r"(\d+):(\d+)\.(\d+)", t)
     if match:
         m, s, ms = match.groups()
         return int(m) * 60 + int(s) + int(ms) / 100
 
-    # mm:ss
     match = re.match(r"(\d+):(\d+)$", t)
     if match:
         m, s = match.groups()
         return int(m) * 60 + int(s)
 
-    # 3分14秒47
     match = re.match(r"(\d+)分(\d+)秒(\d+)", t)
     if match:
         m, s, ms = match.groups()
@@ -130,7 +115,7 @@ def time_to_seconds(t):
     return None
 
 # ---------------------------------------------------------
-# Excel 読み込み（タイム列を文字列で読む → 丸め誤差ゼロ）
+# Excel 読み込み（dtype=str を使わない）
 # ---------------------------------------------------------
 file_path = "穂果記録.xlsx"
 
@@ -139,14 +124,13 @@ event = st.selectbox("種目を選択してください", events)
 
 sheet_name = event
 
-data = pd.read_excel(file_path, sheet_name=sheet_name, usecols="A:F", dtype=str)
+data = pd.read_excel(file_path, sheet_name=sheet_name, usecols="A:F")
 data = normalize_columns(data)
 
 # ---------------------------------------------------------
-# 必要な列チェック
+# 必要列チェック
 # ---------------------------------------------------------
 required = ["日付", "距離", "長水路or短水路", "タイム"]
-
 for col in required:
     if col not in data.columns:
         st.error(f"必要な列「{col}」が見つかりません")
@@ -154,10 +138,16 @@ for col in required:
         st.stop()
 
 # ---------------------------------------------------------
-# 距離の揺れを吸収（200m / ２００ / 200.0 など）
+# 日付（Excel日付型）を datetime に統一
+# ---------------------------------------------------------
+data["日付"] = pd.to_datetime(data["日付"], errors="coerce")
+
+# ---------------------------------------------------------
+# 距離の揺れ吸収
 # ---------------------------------------------------------
 data["距離"] = (
     data["距離"]
+    .astype(str)
     .str.replace("m", "", regex=False)
     .str.replace("Ｍ", "", regex=False)
     .str.replace("　", "", regex=False)
@@ -166,28 +156,28 @@ data["距離"] = (
 data["距離"] = pd.to_numeric(data["距離"], errors="coerce")
 
 # ---------------------------------------------------------
-# 長水路/短水路の揺れを吸収
+# 長水路/短水路の揺れ吸収
 # ---------------------------------------------------------
 data["長水路or短水路"] = (
     data["長水路or短水路"]
+    .astype(str)
     .str.replace(" ", "")
     .str.replace("　", "")
     .str.strip()
 )
 
 # ---------------------------------------------------------
-# 日付を datetime に変換
+# タイムを秒に変換
 # ---------------------------------------------------------
-data["日付"] = pd.to_datetime(data["日付"], errors="coerce")
+data["タイム"] = data["タイム"].astype(str).apply(time_to_seconds)
 
 # ---------------------------------------------------------
-# タイム列を秒に変換
+# 欠損除去
 # ---------------------------------------------------------
-data["タイム"] = data["タイム"].apply(time_to_seconds)
-data = data.dropna(subset=["タイム", "距離", "日付"])
+data = data.dropna(subset=["日付", "距離", "タイム"])
 
 # ---------------------------------------------------------
-# 距離フィルタ（メドレーだけ特別ルール）
+# 距離フィルタ
 # ---------------------------------------------------------
 if event == "メドレー":
     distance_list = [200, 400]
@@ -197,7 +187,7 @@ else:
 distance = st.selectbox("距離を選択してください", distance_list)
 
 # ---------------------------------------------------------
-# 長水路／短水路／全記録フィルタ
+# 長水路／短水路／全記録
 # ---------------------------------------------------------
 course = st.selectbox("短水路／長水路を選択", ["短水路", "長水路", "全記録"])
 
@@ -223,21 +213,12 @@ fig, ax = plt.subplots(figsize=(10, 5))
 
 ax.plot(filtered["日付"], filtered["タイム"], color="gray", linewidth=2)
 
-color_map = {
-    "長水路": "tab:blue",
-    "短水路": "tab:red"
-}
+color_map = {"長水路": "tab:blue", "短水路": "tab:red"}
 
 for c in ["長水路", "短水路"]:
     df_c = filtered[filtered["長水路or短水路"] == c]
     if not df_c.empty:
-        ax.scatter(
-            df_c["日付"],
-            df_c["タイム"],
-            color=color_map[c],
-            label=c,
-            s=60
-        )
+        ax.scatter(df_c["日付"], df_c["タイム"], color=color_map[c], label=c, s=60)
 
 y_min = int(filtered["タイム"].min() // 10 * 10)
 y_max = int(filtered["タイム"].max() // 10 * 10 + 10)
@@ -260,7 +241,7 @@ if course == "全記録":
 st.pyplot(fig)
 
 # ---------------------------------------------------------
-# 最新記録（会場の KeyError 完全対策）
+# 最新記録
 # ---------------------------------------------------------
 latest = filtered.iloc[-1]
 
@@ -270,7 +251,7 @@ st.write(f"タイム：{seconds_to_competition_time(latest['タイム'])}")
 st.write(f"会場：{latest.get('会場', '―')}")
 
 # ---------------------------------------------------------
-# ベストタイム（短水路・長水路）
+# ベストタイム
 # ---------------------------------------------------------
 best_short = data[(data["距離"] == distance) & (data["長水路or短水路"] == "短水路")]
 best_long  = data[(data["距離"] == distance) & (data["長水路or短水路"] == "長水路")]
