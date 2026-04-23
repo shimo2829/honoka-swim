@@ -48,16 +48,25 @@ if not st.session_state.authenticated:
 st.title("HONOKA Swimming Record Dashboard")
 
 # ---------------------------------------------------------
-# 列名を正規化（揺れ対策）
+# 列名を正規化（揺れ・不可視文字対策）
 # ---------------------------------------------------------
 def normalize_columns(df):
     new_cols = []
     for col in df.columns:
         c = str(col)
+
+        # 半角・全角スペース除去
         c = c.replace(" ", "")
         c = c.replace("　", "")
+
+        # 不可視文字（ゼロ幅スペースなど）除去
+        c = re.sub(r"[\u200B-\u200F\uFEFF]", "", c)
+
+        # 列名ゆれ修正
         c = c.replace("ヒヅケ", "日付")
+
         new_cols.append(c)
+
     df.columns = new_cols
     return df
 
@@ -162,7 +171,7 @@ distance = st.selectbox("距離を選択してください", distance_list)
 # ---------------------------------------------------------
 # 長水路／短水路／全記録フィルタ
 # ---------------------------------------------------------
-course = st.selectbox("長水路／短水路を選択", ["長水路", "短水路", "全記録"])
+course = st.selectbox("長水路／短水路を選択", ["短水路", "長水路", "全記録"])
 
 # ---------------------------------------------------------
 # データ絞り込み
@@ -223,13 +232,16 @@ if course == "全記録":
 st.pyplot(fig)
 
 # ---------------------------------------------------------
-# 最新記録
+# 最新記録（会場の KeyError 完全対策）
 # ---------------------------------------------------------
 latest = filtered.iloc[-1]
+
 st.subheader("最新の記録")
 st.write(f"日付：{latest['日付']}")
 st.write(f"タイム：{seconds_to_competition_time(latest['タイム'])}")
-st.write(f"会場：{latest['会場']}")
+
+# 会場が欠損・不可視文字・列名揺れでも落ちない
+st.write(f"会場：{latest.get('会場', '―')}")
 
 # ---------------------------------------------------------
 # ベストタイム（短水路・長水路）
@@ -254,4 +266,3 @@ if not best_long.empty:
     st.write(f"更新日：{d}")
 else:
     st.write("データなし")
-
