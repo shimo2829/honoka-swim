@@ -153,7 +153,7 @@ data = data.dropna(subset=["タイム"])
 # 距離フィルタ（メドレーだけ特別ルール）
 # ---------------------------------------------------------
 if event == "メドレー":
-    distance_list = [100, 200, 400]
+    distance_list = [200, 400]
 else:
     distance_list = sorted(data["距離"].unique())
 
