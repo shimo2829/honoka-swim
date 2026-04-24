@@ -178,12 +178,16 @@ for c in ["長水路", "短水路"]:
         ax.scatter(df_c["日付"], df_c["タイム"], color=color_map[c], label=c, s=60)
 
 ax.set_xlabel("日付")
-ax.set_ylabel("タイム（秒）")
+ax.set_ylabel("タイム")
 ax.set_title(f"{event} {distance}m（{course}）の記録推移")
 ax.grid(True)
 
 if course == "全記録":
     ax.legend()
+
+# ★ Y軸を競泳表記に変換（ここが最重要）
+yticks = ax.get_yticks()
+ax.set_yticklabels([seconds_to_swim_format(t) for t in yticks])
 
 st.pyplot(fig)
 
