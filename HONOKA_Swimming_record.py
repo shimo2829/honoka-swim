@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from matplotlib import font_manager
 import os
 import re
-from datetime import datetime, timedelta
 
 # ---------------------------------------------------------
 # 日本語フォント設定
@@ -61,54 +60,40 @@ def normalize_columns(df):
     return df
 
 # ---------------------------------------------------------
-# タイムを秒に変換（Excel の全形式に完全対応）
+# タイム変換（最終決定版）
 # ---------------------------------------------------------
 def time_to_seconds(t):
     if t is None:
         return None
 
-    # -----------------------------
-    # ① Excel の日付シリアル（例：45710）
-    # → メドレーのタイム列に混入している
-    # -----------------------------
     if isinstance(t, (int, float)) and t > 30000:
-        return None  # タイムではない
+        return None
 
-    # -----------------------------
-    # ② Excel の時刻シリアル（例：1.17E-3）
-    # -----------------------------
     if isinstance(t, (int, float)):
-        frac = float(t) % 1
-        return frac * 86400  # 1日=86400秒
+        if 0 < t < 1:
+            return t * 86400
+        else:
+            return float(t)
 
-    # -----------------------------
-    # ③ 競泳表記（例：4'39"09）
-    # -----------------------------
-    t = str(t).strip()
-    t = t.replace("：", ":")
+    s = str(t).strip()
+    s = s.replace("：", ":")
 
-    m = re.match(r"(\d+)'(\d+)[\"”]?(\d+)", t)
+    m = re.match(r"(\d+)'(\d+)[\"”]?(\d+)", s)
     if m:
         minutes = int(m.group(1))
         seconds = int(m.group(2))
         ms = int(m.group(3))
         return minutes * 60 + seconds + ms / 100
 
-    # -----------------------------
-    # ④ 分:秒.ミリ秒（例：01:41.11）
-    # -----------------------------
-    if ":" in t:
+    if ":" in s:
         try:
-            m, s = t.split(":")
-            return int(m) * 60 + float(s)
+            m, sec = s.split(":")
+            return int(m) * 60 + float(sec)
         except:
             pass
 
-    # -----------------------------
-    # ⑤ 秒のみ（例：58.87）
-    # -----------------------------
     try:
-        return float(t)
+        return float(s)
     except:
         return None
 
@@ -127,10 +112,8 @@ data = pd.read_excel(file_path, sheet_name=sheet_name, usecols="A:F")
 data.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 data = normalize_columns(data)
 
-# タイム変換
 data["タイム"] = data["タイム"].apply(time_to_seconds)
 
-# 距離を整数化
 data["距離"] = pd.to_numeric(data["距離"], errors="coerce")
 data = data.dropna(subset=["距離"])
 data["距離"] = data["距離"].astype(int)
