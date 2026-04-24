@@ -60,11 +60,16 @@ def normalize_columns(df):
     return df
 
 # ---------------------------------------------------------
-# タイムを秒に変換（競泳タイム完全対応）
+# タイムを秒に変換（Excel時刻・全角コロン・文字列すべて対応）
 # ---------------------------------------------------------
 def time_to_seconds(t):
     if t is None:
         return None
+
+    # Excel の時刻シリアル値（float）対応
+    if isinstance(t, (int, float)):
+        # 1日 = 86400秒
+        return float(t) * 86400
 
     t = str(t).strip()
 
@@ -75,7 +80,6 @@ def time_to_seconds(t):
     if ":" in t:
         try:
             m, s = t.split(":")
-            s = s.replace(" ", "")
             return int(m) * 60 + float(s)
         except:
             return None
@@ -107,7 +111,7 @@ data.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム
 # 正規化
 data = normalize_columns(data)
 
-# タイム変換
+# タイム変換（Excel時刻も文字列も全部対応）
 data["タイム"] = data["タイム"].apply(time_to_seconds)
 
 # 距離を安全に整数化（空白セル対策）
