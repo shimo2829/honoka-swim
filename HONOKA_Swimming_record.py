@@ -67,6 +67,10 @@ def time_to_seconds(t):
     if t is None:
         return None
 
+    # pandas Timestamp（01:41.11 がこれになることがある）
+    if isinstance(t, pd.Timestamp):
+        return t.hour * 3600 + t.minute * 60 + t.second + t.microsecond / 1e6
+
     # Excel の日付シリアル（例：45710）
     if isinstance(t, (int, float)) and t > 30000:
         return None
@@ -123,7 +127,10 @@ event = st.selectbox("種目を選択してください", events)
 
 sheet_name = event
 
-data = pd.read_excel(file_path, sheet_name=sheet_name, usecols="A:F")
+data = pd.read_excel(file_path, sheet_name=sheet_name)
+
+# 最初の6列だけ使う（列ズレ対策）
+data = data.iloc[:, :6]
 
 data.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 data = normalize_columns(data)
@@ -135,7 +142,7 @@ data = data.dropna(subset=["距離"])
 data["距離"] = data["距離"].astype(int)
 
 # ---------------------------------------------------------
-# 距離選択（★ブレだけ 50/100 を固定）
+# 距離選択（ブレだけ 50/100）
 # ---------------------------------------------------------
 if event == "メドレー":
     distance_list = [200, 400]
@@ -162,7 +169,7 @@ else:
         (data["長水路or短水路"] == course)
     ].sort_values("日付")
 
-# ★ タイムが NaN の行は除外（ここが最重要）
+# NaN のタイムは除外
 filtered = filtered[filtered["タイム"].notna()]
 
 if filtered.empty:
@@ -191,7 +198,7 @@ ax.grid(True)
 if course == "全記録":
     ax.legend()
 
-# ★ Y軸を競泳表記に変換
+# Y軸を競泳表記に変換
 yticks = ax.get_yticks()
 ax.set_yticklabels([seconds_to_swim_format(t) for t in yticks])
 
