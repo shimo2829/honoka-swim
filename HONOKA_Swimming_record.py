@@ -92,8 +92,8 @@ data = normalize_columns(data)
 # タイムを float に変換（ブレのエラー原因）
 data["タイム"] = data["タイム"].apply(time_to_seconds)
 
-# 距離を数値化（100.0 → 100）
-data["距離"] = pd.to_numeric(data["距離"], errors="coerce")
+# ★ 距離を整数に変換（100.0 → 100）← ブレが出ない原因の本丸
+data["距離"] = pd.to_numeric(data["距離"], errors="coerce").astype(int)
 
 # ---------------------------------------------------------
 # 必要な列チェック
