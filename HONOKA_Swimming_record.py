@@ -48,16 +48,24 @@ if not st.session_state.authenticated:
 st.title("HONOKA Swimming Record Dashboard")
 
 # ---------------------------------------------------------
-# 列名正規化
+# 列名正規化（スペース完全除去）
 # ---------------------------------------------------------
 def normalize_columns(df):
     new_cols = []
     for col in df.columns:
         c = str(col)
+
+        # 半角・全角スペース除去
         c = c.replace(" ", "").replace("　", "")
+
+        # 不可視文字除去
         c = re.sub(r"[\u200B-\u200F\uFEFF]", "", c)
+
+        # 列名ゆれ修正
         c = c.replace("ヒヅケ", "日付")
+
         new_cols.append(c)
+
     df.columns = new_cols
     return df
 
@@ -124,9 +132,9 @@ event = st.selectbox("種目を選択してください", events)
 
 sheet_name = event
 
-# ★ G列以降を完全無視する
+# ★ G列以降を完全無視（A〜Fだけ残す）
 data = pd.read_excel(file_path, sheet_name=sheet_name)
-data = data.iloc[:, :6]   # ← A〜F列だけ残す
+data = data.iloc[:, :6]
 
 data = normalize_columns(data)
 
@@ -146,7 +154,7 @@ for col in required:
 data["日付"] = pd.to_datetime(data["日付"], errors="coerce")
 
 # ---------------------------------------------------------
-# 距離の揺れ吸収
+# 距離の揺れ吸収（50, ５０, 50.0 すべてOK）
 # ---------------------------------------------------------
 data["距離"] = (
     data["距離"]
@@ -159,7 +167,7 @@ data["距離"] = (
 data["距離"] = pd.to_numeric(data["距離"], errors="coerce")
 
 # ---------------------------------------------------------
-# 長水路/短水路の揺れ吸収
+# 長水路/短水路の揺れ吸収（スペース完全除去）
 # ---------------------------------------------------------
 data["長水路or短水路"] = (
     data["長水路or短水路"]
