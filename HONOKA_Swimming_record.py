@@ -3,16 +3,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
 import os
+import re
+from datetime import datetime, timedelta
 
 # ---------------------------------------------------------
-# 日本語フォント設定（文字化け対策）
+# 日本語フォント設定
 # ---------------------------------------------------------
 font_path = os.path.join(os.path.dirname(__file__), "ipaexg.ttf")
 font_manager.fontManager.addfont(font_path)
 plt.rcParams["font.family"] = "IPAexGothic"
 
 # ---------------------------------------------------------
-# ページ設定（スマホ対応）
+# ページ設定
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="穂果 Swimming Record Dashboard",
@@ -41,49 +43,70 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ---------------------------------------------------------
-# 認証後タイトル
+# タイトル
 # ---------------------------------------------------------
 st.title("HONOKA Swimming Record Dashboard")
 
 # ---------------------------------------------------------
-# 列名を正規化（揺れ対策）
+# 列名を正規化
 # ---------------------------------------------------------
 def normalize_columns(df):
     new_cols = []
     for col in df.columns:
         c = str(col)
-        c = c.replace(" ", "")
-        c = c.replace("　", "")
+        c = c.replace(" ", "").replace("　", "")
         c = c.replace("ヒヅケ", "日付")
         new_cols.append(c)
     df.columns = new_cols
     return df
 
 # ---------------------------------------------------------
-# タイムを秒に変換（Excel日付＋時刻 完全対応）
+# タイムを秒に変換（Excel の全形式に完全対応）
 # ---------------------------------------------------------
 def time_to_seconds(t):
     if t is None:
         return None
 
-    # Excel の日付＋時刻（float）対応
+    # -----------------------------
+    # ① Excel の日付シリアル（例：45710）
+    # → メドレーのタイム列に混入している
+    # -----------------------------
+    if isinstance(t, (int, float)) and t > 30000:
+        return None  # タイムではない
+
+    # -----------------------------
+    # ② Excel の時刻シリアル（例：1.17E-3）
+    # -----------------------------
     if isinstance(t, (int, float)):
-        # 小数部分だけ取り出す（時刻部分）
         frac = float(t) % 1
         return frac * 86400  # 1日=86400秒
 
+    # -----------------------------
+    # ③ 競泳表記（例：4'39"09）
+    # -----------------------------
     t = str(t).strip()
     t = t.replace("：", ":")
 
-    # 分:秒.ミリ秒
+    m = re.match(r"(\d+)'(\d+)[\"”]?(\d+)", t)
+    if m:
+        minutes = int(m.group(1))
+        seconds = int(m.group(2))
+        ms = int(m.group(3))
+        return minutes * 60 + seconds + ms / 100
+
+    # -----------------------------
+    # ④ 分:秒.ミリ秒（例：01:41.11）
+    # -----------------------------
     if ":" in t:
         try:
             m, s = t.split(":")
             return int(m) * 60 + float(s)
         except:
-            return None
+            pass
 
-    # 秒のみ
+    # -----------------------------
+    # ⑤ 秒のみ（例：58.87）
+    # -----------------------------
     try:
         return float(t)
     except:
@@ -99,38 +122,21 @@ event = st.selectbox("種目を選択してください", events)
 
 sheet_name = event
 
-# ---------------------------------------------------------
-# データ読み込み（A〜F列）
-# ---------------------------------------------------------
 data = pd.read_excel(file_path, sheet_name=sheet_name, usecols="A:F")
 
-# 列名強制上書き
 data.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
-
-# 正規化
 data = normalize_columns(data)
 
-# タイム変換（Excel時刻も文字列も全部対応）
+# タイム変換
 data["タイム"] = data["タイム"].apply(time_to_seconds)
 
-# 距離を安全に整数化（空白セル対策）
+# 距離を整数化
 data["距離"] = pd.to_numeric(data["距離"], errors="coerce")
 data = data.dropna(subset=["距離"])
 data["距離"] = data["距離"].astype(int)
 
 # ---------------------------------------------------------
-# 必要な列チェック
-# ---------------------------------------------------------
-required = ["日付", "距離", "長水路or短水路", "タイム"]
-
-for col in required:
-    if col not in data.columns:
-        st.error(f"必要な列「{col}」が見つかりません")
-        st.write("現在の列名：", list(data.columns))
-        st.stop()
-
-# ---------------------------------------------------------
-# 距離フィルタ（メドレーは固定）
+# 距離選択
 # ---------------------------------------------------------
 if event == "メドレー":
     distance_list = [200, 400]
@@ -140,7 +146,7 @@ else:
 distance = st.selectbox("距離を選択してください", distance_list)
 
 # ---------------------------------------------------------
-# 長水路／短水路／全記録フィルタ（全記録をデフォルト）
+# 長水路／短水路／全記録
 # ---------------------------------------------------------
 course = st.selectbox("長水路／短水路を選択", ["全記録", "短水路", "長水路"])
 
@@ -193,7 +199,7 @@ st.write(f"タイム：{latest['タイム']} 秒")
 st.write(f"会場：{latest['会場']}")
 
 # ---------------------------------------------------------
-# ベストタイム（短水路・長水路）
+# ベストタイム
 # ---------------------------------------------------------
 best_short = data[(data["距離"] == distance) & (data["長水路or短水路"] == "短水路")]
 best_long  = data[(data["距離"] == distance) & (data["長水路or短水路"] == "長水路")]
