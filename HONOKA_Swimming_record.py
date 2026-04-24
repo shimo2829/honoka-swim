@@ -60,20 +60,19 @@ def normalize_columns(df):
     return df
 
 # ---------------------------------------------------------
-# タイムを秒に変換（Excel時刻・全角コロン・文字列すべて対応）
+# タイムを秒に変換（Excel日付＋時刻 完全対応）
 # ---------------------------------------------------------
 def time_to_seconds(t):
     if t is None:
         return None
 
-    # Excel の時刻シリアル値（float）対応
+    # Excel の日付＋時刻（float）対応
     if isinstance(t, (int, float)):
-        # 1日 = 86400秒
-        return float(t) * 86400
+        # 小数部分だけ取り出す（時刻部分）
+        frac = float(t) % 1
+        return frac * 86400  # 1日=86400秒
 
     t = str(t).strip()
-
-    # 全角コロン対応
     t = t.replace("：", ":")
 
     # 分:秒.ミリ秒
