@@ -134,10 +134,12 @@ data = data.dropna(subset=["距離"])
 data["距離"] = data["距離"].astype(int)
 
 # ---------------------------------------------------------
-# 距離選択
+# 距離選択（★ブレだけ 50/100 を固定）
 # ---------------------------------------------------------
 if event == "メドレー":
     distance_list = [200, 400]
+elif event == "ブレ":
+    distance_list = [50, 100]
 else:
     distance_list = sorted(data["距離"].unique())
 
@@ -185,7 +187,7 @@ ax.grid(True)
 if course == "全記録":
     ax.legend()
 
-# ★ Y軸を競泳表記に変換（ここが最重要）
+# ★ Y軸を競泳表記に変換
 yticks = ax.get_yticks()
 ax.set_yticklabels([seconds_to_swim_format(t) for t in yticks])
 
