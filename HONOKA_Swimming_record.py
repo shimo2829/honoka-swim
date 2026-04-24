@@ -60,7 +60,7 @@ def normalize_columns(df):
     return df
 
 # ---------------------------------------------------------
-# タイムを秒に変換（競泳タイム対応）
+# タイムを秒に変換（競泳タイム完全対応）
 # ---------------------------------------------------------
 def time_to_seconds(t):
     if t is None:
@@ -68,15 +68,19 @@ def time_to_seconds(t):
 
     t = str(t).strip()
 
-    # 01:41.11 → 分:秒.ミリ秒
+    # 全角コロン対応
+    t = t.replace("：", ":")
+
+    # 分:秒.ミリ秒
     if ":" in t:
         try:
             m, s = t.split(":")
+            s = s.replace(" ", "")
             return int(m) * 60 + float(s)
         except:
             return None
 
-    # 58.87 → 秒
+    # 秒のみ
     try:
         return float(t)
     except:
@@ -97,16 +101,16 @@ sheet_name = event
 # ---------------------------------------------------------
 data = pd.read_excel(file_path, sheet_name=sheet_name, usecols="A:F")
 
-# ★ 列名を強制的に上書き（不可視文字対策）
+# 列名強制上書き
 data.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 
 # 正規化
 data = normalize_columns(data)
 
-# タイム変換（競泳タイム → 秒）
+# タイム変換
 data["タイム"] = data["タイム"].apply(time_to_seconds)
 
-# ★ 距離を安全に整数化（空白セル対策）
+# 距離を安全に整数化（空白セル対策）
 data["距離"] = pd.to_numeric(data["距離"], errors="coerce")
 data = data.dropna(subset=["距離"])
 data["距離"] = data["距離"].astype(int)
