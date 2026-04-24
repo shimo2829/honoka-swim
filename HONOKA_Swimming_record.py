@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib import font_manager
 import os
 import re
+import math
 
 # ---------------------------------------------------------
 # 日本語フォント設定
@@ -106,7 +107,7 @@ def time_to_seconds(t):
 # 秒 → 競泳表記（表示用）
 # ---------------------------------------------------------
 def seconds_to_swim_format(sec):
-    if sec is None:
+    if sec is None or (isinstance(sec, float) and math.isnan(sec)):
         return "―"
     m = int(sec // 60)
     s = sec % 60
@@ -161,6 +162,9 @@ else:
         (data["長水路or短水路"] == course)
     ].sort_values("日付")
 
+# ★ タイムが NaN の行は除外（ここが最重要）
+filtered = filtered[filtered["タイム"].notna()]
+
 if filtered.empty:
     st.error(f"{event} の {distance}m（{course}）のデータがありません")
     st.stop()
@@ -197,6 +201,7 @@ st.pyplot(fig)
 # 最新記録（表示は競泳表記）
 # ---------------------------------------------------------
 latest = filtered.iloc[-1]
+
 st.subheader("最新の記録")
 st.write(f"日付：{latest['日付']}")
 st.write(f"タイム：{seconds_to_swim_format(latest['タイム'])}")
@@ -205,11 +210,11 @@ st.write(f"会場：{latest['会場']}")
 # ---------------------------------------------------------
 # ベストタイム（表示は競泳表記）
 # ---------------------------------------------------------
-best_short = data[(data["距離"] == distance) & (data["長水路or短水路"] == "短水路")]
-best_long  = data[(data["距離"] == distance) & (data["長水路or短水路"] == "長水路")]
+best_short = data[(data["距離"] == distance) & (data["長水路or短水路"] == "短水路") & (data["タイム"].notna())]
+best_long  = data[(data["距離"] == distance) & (data["長水路or短水路"] == "長水路") & (data["タイム"].notna())]
 
 st.subheader("ベストタイム（短水路）")
-if not best_short.empty and best_short["タイム"].notna().any():
+if not best_short.empty:
     t = best_short["タイム"].min()
     d = best_short.loc[best_short["タイム"].idxmin(), "日付"]
     st.write(f"ベストタイム：**{seconds_to_swim_format(t)}**")
@@ -218,7 +223,7 @@ else:
     st.write("データなし")
 
 st.subheader("ベストタイム（長水路）")
-if not best_long.empty and best_long["タイム"].notna().any():
+if not best_long.empty:
     t = best_long["タイム"].min()
     d = best_long.loc[best_long["タイム"].idxmin(), "日付"]
     st.write(f"ベストタイム：**{seconds_to_swim_format(t)}**")
