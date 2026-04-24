@@ -238,12 +238,10 @@ if not best_long.empty:
 else:
     st.write("データなし")
 
-# ---------------------------------------------------------
-# 新しい記録を追加するフォーム
-# ---------------------------------------------------------
 st.subheader("新しい記録を追加")
 
 with st.form("add_record_form"):
+    f_event = st.selectbox("種目", ["フリー", "バッタ", "ブレ", "バック", "メドレー"])
     f_date = st.date_input("日付")
     f_grade = st.text_input("学年（例：小5）")
     f_distance = st.selectbox("距離", [50, 100])
@@ -254,10 +252,8 @@ with st.form("add_record_form"):
     submitted = st.form_submit_button("追加")
 
 if submitted:
-    # タイムを秒に変換
     sec = time_to_seconds(f_time)
 
-    # 新しい行を作成
     new_row = pd.DataFrame({
         "日付": [pd.to_datetime(f_date)],
         "学年": [f_grade],
@@ -267,10 +263,9 @@ if submitted:
         "会場": [f_place]
     })
 
-    # Excel 読み込み → 追記 → 保存
-    df = pd.read_excel(file_path, sheet_name=sheet_name)
+    df = pd.read_excel(file_path, sheet_name=f_event)
     df = pd.concat([df, new_row], ignore_index=True)
-    df.to_excel(file_path, sheet_name=sheet_name, index=False)
+    df.to_excel(file_path, sheet_name=f_event, index=False)
 
     st.success("記録を追加しました！")
     st.rerun()
