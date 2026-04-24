@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from matplotlib import font_manager
 import os
 import re
-import datetime
 
 # ---------------------------------------------------------
 # 日本語フォント設定
@@ -55,14 +54,11 @@ def normalize_columns(df):
     for col in df.columns:
         c = str(col)
 
-        # 半角・全角スペース除去
+        # 半角・全角スペース除去（今回の決定打）
         c = c.replace(" ", "").replace("　", "")
 
         # 不可視文字除去
         c = re.sub(r"[\u200B-\u200F\uFEFF]", "", c)
-
-        # 列名ゆれ修正
-        c = c.replace("ヒヅケ", "日付")
 
         new_cols.append(c)
 
@@ -132,9 +128,8 @@ event = st.selectbox("種目を選択してください", events)
 
 sheet_name = event
 
-# ★ G列以降を完全無視（A〜Fだけ残す）
 data = pd.read_excel(file_path, sheet_name=sheet_name)
-data = data.iloc[:, :6]
+data = data.iloc[:, :6]   # A〜F列だけ残す
 
 data = normalize_columns(data)
 
@@ -154,7 +149,7 @@ for col in required:
 data["日付"] = pd.to_datetime(data["日付"], errors="coerce")
 
 # ---------------------------------------------------------
-# 距離の揺れ吸収（50, ５０, 50.0 すべてOK）
+# 距離の揺れ吸収
 # ---------------------------------------------------------
 data["距離"] = (
     data["距離"]
@@ -218,7 +213,7 @@ if filtered.empty:
     st.stop()
 
 # ---------------------------------------------------------
-# グラフ描画（Y軸：分:秒）
+# グラフ描画
 # ---------------------------------------------------------
 fig, ax = plt.subplots(figsize=(10, 5))
 
