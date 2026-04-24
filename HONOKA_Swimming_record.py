@@ -60,15 +60,17 @@ def normalize_columns(df):
     return df
 
 # ---------------------------------------------------------
-# タイム変換（最終決定版）
+# 競泳表記 → 秒（内部計算用）
 # ---------------------------------------------------------
 def time_to_seconds(t):
     if t is None:
         return None
 
+    # Excel の日付シリアル（例：45710）
     if isinstance(t, (int, float)) and t > 30000:
         return None
 
+    # Excel の時刻シリアル（例：1.17E-3）
     if isinstance(t, (int, float)):
         if 0 < t < 1:
             return t * 86400
@@ -78,6 +80,7 @@ def time_to_seconds(t):
     s = str(t).strip()
     s = s.replace("：", ":")
 
+    # 競泳表記（4'39"09）
     m = re.match(r"(\d+)'(\d+)[\"”]?(\d+)", s)
     if m:
         minutes = int(m.group(1))
@@ -85,6 +88,7 @@ def time_to_seconds(t):
         ms = int(m.group(3))
         return minutes * 60 + seconds + ms / 100
 
+    # 分:秒.ミリ秒（01:41.11）
     if ":" in s:
         try:
             m, sec = s.split(":")
@@ -92,10 +96,21 @@ def time_to_seconds(t):
         except:
             pass
 
+    # 秒のみ
     try:
         return float(s)
     except:
         return None
+
+# ---------------------------------------------------------
+# 秒 → 競泳表記（表示用）
+# ---------------------------------------------------------
+def seconds_to_swim_format(sec):
+    if sec is None:
+        return "―"
+    m = int(sec // 60)
+    s = sec % 60
+    return f"{m}'{s:05.2f}"
 
 # ---------------------------------------------------------
 # Excel 読み込み
@@ -149,7 +164,7 @@ if filtered.empty:
     st.stop()
 
 # ---------------------------------------------------------
-# グラフ描画
+# グラフ描画（内部は秒）
 # ---------------------------------------------------------
 fig, ax = plt.subplots(figsize=(10, 5))
 
@@ -173,16 +188,16 @@ if course == "全記録":
 st.pyplot(fig)
 
 # ---------------------------------------------------------
-# 最新記録
+# 最新記録（表示は競泳表記）
 # ---------------------------------------------------------
 latest = filtered.iloc[-1]
 st.subheader("最新の記録")
 st.write(f"日付：{latest['日付']}")
-st.write(f"タイム：{latest['タイム']} 秒")
+st.write(f"タイム：{seconds_to_swim_format(latest['タイム'])}")
 st.write(f"会場：{latest['会場']}")
 
 # ---------------------------------------------------------
-# ベストタイム
+# ベストタイム（表示は競泳表記）
 # ---------------------------------------------------------
 best_short = data[(data["距離"] == distance) & (data["長水路or短水路"] == "短水路")]
 best_long  = data[(data["距離"] == distance) & (data["長水路or短水路"] == "長水路")]
@@ -191,7 +206,7 @@ st.subheader("ベストタイム（短水路）")
 if not best_short.empty and best_short["タイム"].notna().any():
     t = best_short["タイム"].min()
     d = best_short.loc[best_short["タイム"].idxmin(), "日付"]
-    st.write(f"ベストタイム：**{t} 秒**")
+    st.write(f"ベストタイム：**{seconds_to_swim_format(t)}**")
     st.write(f"更新日：{d}")
 else:
     st.write("データなし")
@@ -200,7 +215,7 @@ st.subheader("ベストタイム（長水路）")
 if not best_long.empty and best_long["タイム"].notna().any():
     t = best_long["タイム"].min()
     d = best_long.loc[best_long["タイム"].idxmin(), "日付"]
-    st.write(f"ベストタイム：**{t} 秒**")
+    st.write(f"ベストタイム：**{seconds_to_swim_format(t)}**")
     st.write(f"更新日：{d}")
 else:
     st.write("データなし")
