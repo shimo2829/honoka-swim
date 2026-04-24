@@ -244,7 +244,7 @@ with st.form("add_record_form"):
     f_event = st.selectbox("種目", ["フリー", "バッタ", "ブレ", "バック", "メドレー"])
     f_date = st.date_input("日付")
     f_grade = st.text_input("学年（例：小5）")
-    f_distance = st.selectbox("距離", [50, 100])
+    f_distance = st.selectbox("距離", [50, 100, 200, 400])
     f_course = st.selectbox("長水路 or 短水路", ["長水路", "短水路"])
     f_time = st.text_input("タイム（例：47.55 または 1'41\"11）")
     f_place = st.text_input("会場")
