@@ -60,11 +60,25 @@ def normalize_columns(df):
     return df
 
 # ---------------------------------------------------------
-# タイムを float に変換（ブレのエラー対策）
+# タイムを秒に変換（競泳タイム対応）
 # ---------------------------------------------------------
 def time_to_seconds(t):
+    if t is None:
+        return None
+
+    t = str(t).strip()
+
+    # 01:41.11 → 分:秒.ミリ秒
+    if ":" in t:
+        try:
+            m, s = t.split(":")
+            return int(m) * 60 + float(s)
+        except:
+            return None
+
+    # 58.87 → 秒
     try:
-        return float(str(t).strip())
+        return float(t)
     except:
         return None
 
@@ -83,17 +97,19 @@ sheet_name = event
 # ---------------------------------------------------------
 data = pd.read_excel(file_path, sheet_name=sheet_name, usecols="A:F")
 
-# ★ 列名を強制的に上書き（不可視文字対策の決定打）
+# ★ 列名を強制的に上書き（不可視文字対策）
 data.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 
-# 正規化（スペース削除など）
+# 正規化
 data = normalize_columns(data)
 
-# タイムを float に変換（ブレのエラー原因）
+# タイム変換（競泳タイム → 秒）
 data["タイム"] = data["タイム"].apply(time_to_seconds)
 
-# ★ 距離を整数に変換（100.0 → 100）← ブレが出ない原因の本丸
-data["距離"] = pd.to_numeric(data["距離"], errors="coerce").astype(int)
+# ★ 距離を安全に整数化（空白セル対策）
+data["距離"] = pd.to_numeric(data["距離"], errors="coerce")
+data = data.dropna(subset=["距離"])
+data["距離"] = data["距離"].astype(int)
 
 # ---------------------------------------------------------
 # 必要な列チェック
@@ -117,7 +133,7 @@ else:
 distance = st.selectbox("距離を選択してください", distance_list)
 
 # ---------------------------------------------------------
-# 長水路／短水路／全記録フィルタ
+# 長水路／短水路／全記録フィルタ（全記録をデフォルト）
 # ---------------------------------------------------------
 course = st.selectbox("長水路／短水路を選択", ["全記録", "短水路", "長水路"])
 
@@ -137,32 +153,21 @@ if filtered.empty:
     st.stop()
 
 # ---------------------------------------------------------
-# グラフ描画（全記録は1本の線＋点の色分け）
+# グラフ描画
 # ---------------------------------------------------------
 fig, ax = plt.subplots(figsize=(10, 5))
 
-# 1本の線（全記録でも1本）
 ax.plot(filtered["日付"], filtered["タイム"], color="gray", linewidth=2)
 
-# 点の色分け：長水路→青、短水路→赤
-color_map = {
-    "長水路": "tab:blue",
-    "短水路": "tab:red"
-}
+color_map = {"長水路": "tab:blue", "短水路": "tab:red"}
 
 for c in ["長水路", "短水路"]:
     df_c = filtered[filtered["長水路or短水路"] == c]
     if not df_c.empty:
-        ax.scatter(
-            df_c["日付"],
-            df_c["タイム"],
-            color=color_map[c],
-            label=c,
-            s=60
-        )
+        ax.scatter(df_c["日付"], df_c["タイム"], color=color_map[c], label=c, s=60)
 
 ax.set_xlabel("日付")
-ax.set_ylabel("タイム")
+ax.set_ylabel("タイム（秒）")
 ax.set_title(f"{event} {distance}m（{course}）の記録推移")
 ax.grid(True)
 
@@ -177,17 +182,17 @@ st.pyplot(fig)
 latest = filtered.iloc[-1]
 st.subheader("最新の記録")
 st.write(f"日付：{latest['日付']}")
-st.write(f"タイム：{latest['タイム']}")
+st.write(f"タイム：{latest['タイム']} 秒")
 st.write(f"会場：{latest['会場']}")
 
 # ---------------------------------------------------------
-# ベストタイム（短水路・長水路を別々に計算）
+# ベストタイム（短水路・長水路）
 # ---------------------------------------------------------
 best_short = data[(data["距離"] == distance) & (data["長水路or短水路"] == "短水路")]
 best_long  = data[(data["距離"] == distance) & (data["長水路or短水路"] == "長水路")]
 
 st.subheader("ベストタイム（短水路）")
-if not best_short.empty:
+if not best_short.empty and best_short["タイム"].notna().any():
     t = best_short["タイム"].min()
     d = best_short.loc[best_short["タイム"].idxmin(), "日付"]
     st.write(f"ベストタイム：**{t} 秒**")
@@ -196,7 +201,7 @@ else:
     st.write("データなし")
 
 st.subheader("ベストタイム（長水路）")
-if not best_long.empty:
+if not best_long.empty and best_long["タイム"].notna().any():
     t = best_long["タイム"].min()
     d = best_long.loc[best_long["タイム"].idxmin(), "日付"]
     st.write(f"ベストタイム：**{t} 秒**")
