@@ -64,7 +64,7 @@ def normalize_columns(df):
 # ---------------------------------------------------------
 file_path = "穂果記録.xlsx"
 
-events = ["フリー", "バッタ", "ブレ", "バック"]
+events = ["フリー", "バッタ", "ブレ", "バック", "メドレー"]
 event = st.selectbox("種目を選択してください", events)
 
 sheet_name = event
