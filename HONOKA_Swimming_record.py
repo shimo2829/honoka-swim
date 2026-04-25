@@ -62,7 +62,19 @@ def update_excel_to_github(local_path, repo, file_path, token, commit_message="U
 def save_sheet_without_deleting_others(excel_path, sheet_name, df):
     wb = load_workbook(excel_path)
 
-    if sheet_name in wb.sheetnames
+    # 既存シートがあれば削除
+    if sheet_name in wb.sheetnames:
+        ws = wb[sheet_name]
+        wb.remove(ws)
+
+    # 新しいシートを作成
+    ws = wb.create_sheet(sheet_name)
+
+    # DataFrame を書き込み
+    for r in dataframe_to_rows(df, index=False, header=True):
+        ws.append(r)
+
+    wb.save(excel_path)
 
 # ---------------------------------------------------------
 # 競泳表記 → 秒
