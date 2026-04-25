@@ -239,7 +239,7 @@ else:
     st.write("データなし")
 
 # ---------------------------------------------------------
-# 新しい記録を追加（表示は競泳表記）
+# 新しい記録を追加
 # ---------------------------------------------------------
 st.subheader("新しい記録を追加")
 
@@ -259,7 +259,6 @@ if submitted:
     if new_time_sec is None:
         st.error("タイムの形式が正しくありません")
     else:
-        # 追加する1行（列順を完全固定）
         new_row = pd.DataFrame([{
             "日付": pd.to_datetime(new_date),
             "学年": new_grade,
@@ -270,16 +269,13 @@ if submitted:
         }])
 
         try:
-            # 既存データを読み込み
+            # Excel 読み込み → 正規化 → 列順固定
             book = pd.read_excel(file_path, sheet_name=sheet_name)
-
-            # 列名を強制的に揃える（ズレ防止）
+            book = normalize_columns(book)
+            book = book.iloc[:, :6]
             book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 
-            # 追記
             updated = pd.concat([book, new_row], ignore_index=True)
-
-            # Excel に保存
             updated.to_excel(file_path, sheet_name=sheet_name, index=False)
 
             st.success("記録を追加しました！")
@@ -287,4 +283,3 @@ if submitted:
 
         except Exception as e:
             st.error(f"Excel 書き込みエラー: {e}")
-
