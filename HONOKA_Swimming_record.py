@@ -11,6 +11,23 @@ from openpyxl import load_workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 
 # ---------------------------------------------------------
+# ログイン（パスワード認証）
+# ---------------------------------------------------------
+PASSWORD = st.secrets["PASSWORD"]
+
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    pw = st.text_input("パスワードを入力してください", type="password")
+    if pw == PASSWORD:
+        st.session_state.authenticated = True
+        st.rerun()
+    elif pw != "0128":
+        st.error("パスワードが違います")
+    st.stop()
+
+# ---------------------------------------------------------
 # GitHub secrets 読み込み
 # ---------------------------------------------------------
 GITHUB_TOKEN = st.secrets["GITHUB_TOKEN"]
