@@ -287,18 +287,25 @@ if filtered.empty:
 # ---------------------------------------------------------
 # グラフ
 # ---------------------------------------------------------
+
+# ★ 日付＋学年のラベルを作成（追加）
+filtered["日付_学年"] = (
+    filtered["日付"].dt.strftime("%Y-%m-%d") + "（" + filtered["学年"] + "）"
+)
+
 fig, ax = plt.subplots(figsize=(10, 5))
 
-ax.plot(filtered["日付"], filtered["タイム"], color="gray", linewidth=2)
+# ★ x軸を「日付 → 日付_学年」に変更
+ax.plot(filtered["日付_学年"], filtered["タイム"], color="gray", linewidth=2)
 
 color_map = {"長水路": "tab:blue", "短水路": "tab:red"}
 
 for c in ["長水路", "短水路"]:
     df_c = filtered[filtered["長水路or短水路"] == c]
     if not df_c.empty:
-        ax.scatter(df_c["日付"], df_c["タイム"], color=color_map[c], label=c, s=60)
+        ax.scatter(df_c["日付_学年"], df_c["タイム"], color=color_map[c], label=c, s=60)
 
-ax.set_xlabel("日付")
+ax.set_xlabel("日付（学年）")
 ax.set_ylabel("タイム")
 ax.set_title(f"{event} {distance}m（{course}）の記録推移")
 ax.grid(True)
@@ -306,8 +313,12 @@ ax.grid(True)
 if course == "全記録":
     ax.legend()
 
+# Y軸の競泳表記
 yticks = ax.get_yticks()
 ax.set_yticklabels([seconds_to_swim_format(t) for t in yticks])
+
+# ★ x軸の文字が重ならないように回転
+plt.xticks(rotation=45)
 
 st.pyplot(fig)
 
