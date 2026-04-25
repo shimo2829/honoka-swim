@@ -18,6 +18,23 @@ GITHUB_REPO = st.secrets["GITHUB_REPO"]
 GITHUB_FILE_PATH = st.secrets["GITHUB_FILE_PATH"]
 
 # ---------------------------------------------------------
+# GitHub から Excel を取得
+# ---------------------------------------------------------
+def download_excel_from_github(repo, file_path, token, local_path="temp.xlsx"):
+    url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
+    headers = {"Authorization": f"token {token}"}
+
+    res = requests.get(url, headers=headers)
+    if res.status_code == 200:
+        content = base64.b64decode(res.json()["content"])
+        with open(local_path, "wb") as f:
+            f.write(content)
+        return local_path
+    else:
+        st.error("GitHub からファイルを取得できませんでした")
+        return None
+
+# ---------------------------------------------------------
 # GitHub へ Excel をアップロード
 # ---------------------------------------------------------
 def update_excel_to_github(local_path, repo, file_path, token, commit_message="Update Excel"):
