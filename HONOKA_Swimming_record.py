@@ -150,6 +150,59 @@ if local_excel is None:
     st.stop()
 
 # ---------------------------------------------------------
+# 種目選択
+# ---------------------------------------------------------
+events = ["フリー", "バッタ", "ブレ", "バック", "メドレー"]
+event = st.selectbox("種目を選択してください", events)
+
+# ---------------------------------------------------------
+# ★ 固定ヘッダー（Cloud で100%表示される CSS）
+# ---------------------------------------------------------
+event_colors = {
+    "フリー": "#1E90FF",
+    "バッタ": "#FF8C00",
+    "ブレ":   "#32CD32",
+    "バック": "#8A2BE2",
+    "メドレー": "#DC143C"
+}
+
+header_color = event_colors.get(event, "#000000")
+
+st.markdown(
+    f"""
+    <style>
+        .header-title {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: {header_color};
+            padding: 18px 20px;
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            border-bottom: 3px solid #ddd;
+            z-index: 999999;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }}
+
+        .block-container {{
+            padding-top: 140px !important;
+        }}
+    </style>
+
+    <div class="header-title">
+        <span>FUKA Swimming record</span>
+        <span>{event}</span>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# ---------------------------------------------------------
 # Excel 読み込み
 # ---------------------------------------------------------
 events = ["フリー", "バッタ", "ブレ", "バック", "メドレー"]
