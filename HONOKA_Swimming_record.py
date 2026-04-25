@@ -237,3 +237,54 @@ if not best_long.empty:
     st.write(f"更新日：{d}")
 else:
     st.write("データなし")
+
+# ---------------------------------------------------------
+# 新しい記録を追加（表示は競泳表記）
+# ---------------------------------------------------------
+st.subheader("新しい記録を追加")
+
+with st.form("add_record_form"):
+    new_date = st.date_input("日付")
+    new_grade = st.selectbox("学年", ["小1","小2","小3","小4","小5","小6","中1","中2","中3"])
+    new_distance = st.selectbox("距離", distance_list)
+    new_course = st.selectbox("長水路 or 短水路", ["長水路", "短水路"])
+    new_time_str = st.text_input("タイム（例：4'39\"09 または 01:41.11）")
+    new_place = st.text_input("会場", value="荒野スイミング")
+
+    submitted = st.form_submit_button("追加する")
+
+if submitted:
+    new_time_sec = time_to_seconds(new_time_str)
+
+    if new_time_sec is None:
+        st.error("タイムの形式が正しくありません")
+    else:
+        # 追加する1行（列順を完全固定）
+        new_row = pd.DataFrame([{
+            "日付": pd.to_datetime(new_date),
+            "学年": new_grade,
+            "距離": int(new_distance),
+            "長水路or短水路": new_course,
+            "タイム": new_time_sec,
+            "会場": new_place
+        }])
+
+        try:
+            # 既存データを読み込み
+            book = pd.read_excel(file_path, sheet_name=sheet_name)
+
+            # 列名を強制的に揃える（ズレ防止）
+            book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
+
+            # 追記
+            updated = pd.concat([book, new_row], ignore_index=True)
+
+            # Excel に保存
+            updated.to_excel(file_path, sheet_name=sheet_name, index=False)
+
+            st.success("記録を追加しました！")
+            st.rerun()
+
+        except Exception as e:
+            st.error(f"Excel 書き込みエラー: {e}")
+
