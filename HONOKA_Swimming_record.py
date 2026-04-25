@@ -5,6 +5,33 @@ from matplotlib import font_manager
 import os
 import re
 import math
+import base64
+import requests
+
+def update_excel_to_github(local_path, repo, file_path, token, commit_message="Update Excel"):
+    # GitHub API URL
+    url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
+
+    # ローカルの Excel を読み込み → base64 に変換
+    with open(local_path, "rb") as f:
+        content = f.read()
+    encoded = base64.b64encode(content).decode()
+
+    # 現在のファイルの SHA を取得（上書きに必要）
+    res = requests.get(url, headers={"Authorization": f"token {token}"})
+    sha = res.json().get("sha", None)
+
+    # GitHub に PUT（コミット）
+    data = {
+        "message": commit_message,
+        "content": encoded,
+        "sha": sha
+    }
+
+    res = requests.put(url, json=data, headers={"Authorization": f"token {token}"})
+
+    return res.status_code == 200 or res.status_code == 201
+
 
 # ---------------------------------------------------------
 # 日本語フォント設定
