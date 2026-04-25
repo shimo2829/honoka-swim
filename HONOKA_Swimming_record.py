@@ -129,15 +129,18 @@ def normalize_columns(df):
         new_cols.append(c)
     df.columns = new_cols
     return df
-
-
-# ---------------------------------------------------------
-# 競泳表記 → 秒
-# ---------------------------------------------------------
 def time_to_seconds(t):
     if t is None:
         return None
-
+# ---------------------------------------------------------
+# 競泳表記 → 秒
+# ---------------------------------------------------------
+   def seconds_to_swim_format(sec):
+    if sec is None or (isinstance(sec, float) and math.isnan(sec)):
+        return "―"
+    m = int(sec // 60)
+    s = sec % 60
+    return f"{m}'{s:05.2f}
     if isinstance(t, pd.Timestamp):
         return t.hour * 3600 + t.minute * 60 + t.second + t.microsecond / 1e6
 
