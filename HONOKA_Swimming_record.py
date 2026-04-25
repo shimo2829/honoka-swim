@@ -205,9 +205,6 @@ st.markdown(
 # ---------------------------------------------------------
 # Excel 読み込み
 # ---------------------------------------------------------
-events = ["フリー", "バッタ", "ブレ", "バック", "メドレー"]
-event = st.selectbox("種目を選択してください", events)
-
 sheet_name = event
 
 data = pd.read_excel(local_excel, sheet_name=sheet_name)
