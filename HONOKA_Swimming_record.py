@@ -272,7 +272,7 @@ st.subheader("新しい記録を追加")
 
 with st.form("add_record_form"):
     new_date = st.date_input("日付")
-    new_grade = st.selectbox("学年", ["小1","小2","小3","小4","小5","小6","中1","中2","中3"])
+    new_grade = st.selectbox("学年", ["小6","中1","中2","中3"])
     new_distance = st.selectbox("距離", distance_list)
     new_course = st.selectbox("長水路 or 短水路", ["長水路", "短水路"])
     new_time_str = st.text_input("タイム（例：4'39\"09 または 01:41.11）")
