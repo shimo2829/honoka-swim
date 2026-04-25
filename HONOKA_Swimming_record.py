@@ -130,6 +130,49 @@ def normalize_columns(df):
     df.columns = new_cols
     return df
 
+
+# ---------------------------------------------------------
+# 競泳表記 → 秒
+# ---------------------------------------------------------
+def time_to_seconds(t):
+    if t is None:
+        return None
+
+    if isinstance(t, pd.Timestamp):
+        return t.hour * 3600 + t.minute * 60 + t.second + t.microsecond / 1e6
+
+    if isinstance(t, (int, float)) and t > 30000:
+        return None
+
+    if isinstance(t, (int, float)):
+        if 0 < t < 1:
+            return t * 86400
+        else:
+            return float(t)
+
+    s = str(t).strip()
+    s = s.replace("：", ":")
+
+    m = re.match(r"(\d+)'(\d+)[\"”]?(\d+)", s)
+    if m:
+        minutes = int(m.group(1))
+        seconds = int(m.group(2))
+        ms = int(m.group(3))
+        return minutes * 60 + seconds + ms / 100
+
+    if ":" in s:
+        try:
+            m, sec = s.split(":")
+            return int(m) * 60 + float(sec)
+        except:
+            pass
+
+    try:
+        return float(s)
+    except:
+        return None
+
+
 # ---------------------------------------------------------
 # GitHub から最新 Excel を取得
 # ---------------------------------------------------------
