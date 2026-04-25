@@ -11,6 +11,14 @@ from openpyxl import load_workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 
 # ---------------------------------------------------------
+# GitHub secrets 読み込み
+# ---------------------------------------------------------
+GITHUB_TOKEN = st.secrets["GITHUB_TOKEN"]
+GITHUB_REPO = st.secrets["GITHUB_REPO"]
+GITHUB_FILE_PATH = st.secrets["GITHUB_FILE_PATH"]
+
+
+# ---------------------------------------------------------
 # 種目ごとのヘッダー色設定
 # ---------------------------------------------------------
 event_colors = {
@@ -54,13 +62,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
-# ---------------------------------------------------------
-# GitHub secrets 読み込み
-# ---------------------------------------------------------
-GITHUB_TOKEN = st.secrets["GITHUB_TOKEN"]
-GITHUB_REPO = st.secrets["GITHUB_REPO"]
-GITHUB_FILE_PATH = st.secrets["GITHUB_FILE_PATH"]
 
 # ---------------------------------------------------------
 # GitHub から Excel を取得
