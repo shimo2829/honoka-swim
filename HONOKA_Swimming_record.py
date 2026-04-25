@@ -189,6 +189,18 @@ st.markdown(
             gap: 40px;
         }}
 
+        /* スマホ画面（幅600px以下）のときだけ小さくする */
+        @media screen and (max-width: 600px) {{
+            .header-title {{
+                font-size: 20px;
+                padding: 12px 10px;
+                gap: 20px;
+            }}
+            .block-container {{
+                padding-top: 100px !important;
+            }}
+        }}
+
         .block-container {{
             padding-top: 140px !important;
         }}
@@ -201,6 +213,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 # ---------------------------------------------------------
 # Excel 読み込み
