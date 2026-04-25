@@ -347,8 +347,8 @@ st.write(target_row)
 # -------------------------
 with st.form("edit_form"):
     e_date = st.date_input("日付（修正）", value=target_row["日付"])
-    e_grade = st.selectbox("学年（修正）", ["小6","中1","中2","中3"],
-                           index=["小6","中1","中2","中3"].index(target_row["学年"]))
+    e_grade = st.selectbox("学年（修正）", ["小1","小2","小3","小4","小5","小6","中1","中2","中3"],
+                           index=["小1","小2","小3","小4","小5","小6","中1","中2","中3"].index(target_row["学年"]))
     e_distance = st.number_input("距離（修正）", value=int(target_row["距離"]))
     e_course = st.selectbox("長水路 or 短水路（修正）", ["長水路", "短水路"],
                             index=0 if target_row["長水路or短水路"]=="長水路" else 1)
