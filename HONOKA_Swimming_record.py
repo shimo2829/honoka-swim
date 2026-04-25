@@ -275,7 +275,13 @@ with st.form("add_record_form"):
     new_grade = st.selectbox("学年", ["小6","中1","中2","中3"])
     new_distance = st.selectbox("距離", distance_list)
     new_course = st.selectbox("長水路 or 短水路", ["長水路", "短水路"])
-    new_time_str = st.text_input("タイム（例：4'39\"09 または 01:41.11）")
+    new_time_str = st.text_input(
+    "タイム（入力方法）\n\n"
+    "【60秒未満】例：58秒11 → 58.11\n"
+    "【60秒以上】例：1分41秒58 → 1'41\"58\n\n"
+    "※ どちらの形式でも自動で変換されます"
+)
+
     new_place = st.text_input("会場", value="菰野スイミング")
 
     submitted = st.form_submit_button("追加する")
