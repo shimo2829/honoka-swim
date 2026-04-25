@@ -8,20 +8,26 @@ import math
 import base64
 import requests
 
+# ---------------------------------------------------------
+# GitHub secrets 読み込み
+# ---------------------------------------------------------
+GITHUB_TOKEN = st.secrets["GITHUB_TOKEN"]
+GITHUB_REPO = st.secrets["GITHUB_REPO"]
+GITHUB_FILE_PATH = st.secrets["GITHUB_FILE_PATH"]
+
+# ---------------------------------------------------------
+# GitHub へ Excel をアップロードする関数
+# ---------------------------------------------------------
 def update_excel_to_github(local_path, repo, file_path, token, commit_message="Update Excel"):
-    # GitHub API URL
     url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
 
-    # ローカルの Excel を読み込み → base64 に変換
     with open(local_path, "rb") as f:
         content = f.read()
     encoded = base64.b64encode(content).decode()
 
-    # 現在のファイルの SHA を取得（上書きに必要）
     res = requests.get(url, headers={"Authorization": f"token {token}"})
     sha = res.json().get("sha", None)
 
-    # GitHub に PUT（コミット）
     data = {
         "message": commit_message,
         "content": encoded,
@@ -29,8 +35,7 @@ def update_excel_to_github(local_path, repo, file_path, token, commit_message="U
     }
 
     res = requests.put(url, json=data, headers={"Authorization": f"token {token}"})
-
-    return res.status_code == 200 or res.status_code == 201
+    return res.status_code in [200, 201]
 
 
 # ---------------------------------------------------------
@@ -88,21 +93,18 @@ def normalize_columns(df):
     return df
 
 # ---------------------------------------------------------
-# 競泳表記 → 秒（内部計算用）
+# 競泳表記 → 秒
 # ---------------------------------------------------------
 def time_to_seconds(t):
     if t is None:
         return None
 
-    # pandas Timestamp（01:41.11 がこれになることがある）
     if isinstance(t, pd.Timestamp):
         return t.hour * 3600 + t.minute * 60 + t.second + t.microsecond / 1e6
 
-    # Excel の日付シリアル（例：45710）
     if isinstance(t, (int, float)) and t > 30000:
         return None
 
-    # Excel の時刻シリアル（例：1.17E-3）
     if isinstance(t, (int, float)):
         if 0 < t < 1:
             return t * 86400
@@ -112,7 +114,6 @@ def time_to_seconds(t):
     s = str(t).strip()
     s = s.replace("：", ":")
 
-    # 競泳表記（4'39"09）
     m = re.match(r"(\d+)'(\d+)[\"”]?(\d+)", s)
     if m:
         minutes = int(m.group(1))
@@ -120,7 +121,6 @@ def time_to_seconds(t):
         ms = int(m.group(3))
         return minutes * 60 + seconds + ms / 100
 
-    # 分:秒.ミリ秒（01:41.11）
     if ":" in s:
         try:
             m, sec = s.split(":")
@@ -128,14 +128,13 @@ def time_to_seconds(t):
         except:
             pass
 
-    # 秒のみ
     try:
         return float(s)
     except:
         return None
 
 # ---------------------------------------------------------
-# 秒 → 競泳表記（表示用）
+# 秒 → 競泳表記
 # ---------------------------------------------------------
 def seconds_to_swim_format(sec):
     if sec is None or (isinstance(sec, float) and math.isnan(sec)):
@@ -155,21 +154,17 @@ event = st.selectbox("種目を選択してください", events)
 sheet_name = event
 
 data = pd.read_excel(file_path, sheet_name=sheet_name)
-
-# 最初の6列だけ使う（列ズレ対策）
 data = data.iloc[:, :6]
-
 data.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 data = normalize_columns(data)
 
 data["タイム"] = data["タイム"].apply(time_to_seconds)
-
 data["距離"] = pd.to_numeric(data["距離"], errors="coerce")
 data = data.dropna(subset=["距離"])
 data["距離"] = data["距離"].astype(int)
 
 # ---------------------------------------------------------
-# 距離選択（ブレだけ 50/100）
+# 距離選択
 # ---------------------------------------------------------
 if event == "メドレー":
     distance_list = [200, 400]
@@ -181,7 +176,7 @@ else:
 distance = st.selectbox("距離を選択してください", distance_list)
 
 # ---------------------------------------------------------
-# 長水路／短水路／全記録
+# 長水路／短水路
 # ---------------------------------------------------------
 course = st.selectbox("長水路／短水路を選択", ["全記録", "短水路", "長水路"])
 
@@ -196,7 +191,6 @@ else:
         (data["長水路or短水路"] == course)
     ].sort_values("日付")
 
-# NaN のタイムは除外
 filtered = filtered[filtered["タイム"].notna()]
 
 if filtered.empty:
@@ -204,7 +198,7 @@ if filtered.empty:
     st.stop()
 
 # ---------------------------------------------------------
-# グラフ描画（内部は秒）
+# グラフ
 # ---------------------------------------------------------
 fig, ax = plt.subplots(figsize=(10, 5))
 
@@ -225,14 +219,13 @@ ax.grid(True)
 if course == "全記録":
     ax.legend()
 
-# Y軸を競泳表記に変換
 yticks = ax.get_yticks()
 ax.set_yticklabels([seconds_to_swim_format(t) for t in yticks])
 
 st.pyplot(fig)
 
 # ---------------------------------------------------------
-# 最新記録（表示は競泳表記）
+# 最新記録
 # ---------------------------------------------------------
 latest = filtered.iloc[-1]
 
@@ -242,7 +235,7 @@ st.write(f"タイム：{seconds_to_swim_format(latest['タイム'])}")
 st.write(f"会場：{latest['会場']}")
 
 # ---------------------------------------------------------
-# ベストタイム（表示は競泳表記）
+# ベストタイム
 # ---------------------------------------------------------
 best_short = data[(data["距離"] == distance) & (data["長水路or短水路"] == "短水路") & (data["タイム"].notna())]
 best_long  = data[(data["距離"] == distance) & (data["長水路or短水路"] == "長水路") & (data["タイム"].notna())]
@@ -296,7 +289,6 @@ if submitted:
         }])
 
         try:
-            # Excel 読み込み → 正規化 → 列順固定
             book = pd.read_excel(file_path, sheet_name=sheet_name)
             book = normalize_columns(book)
             book = book.iloc[:, :6]
@@ -305,7 +297,16 @@ if submitted:
             updated = pd.concat([book, new_row], ignore_index=True)
             updated.to_excel(file_path, sheet_name=sheet_name, index=False)
 
-            st.success("記録を追加しました！")
+            # GitHub に反映
+            update_excel_to_github(
+                local_path=file_path,
+                repo=GITHUB_REPO,
+                file_path=GITHUB_FILE_PATH,
+                token=GITHUB_TOKEN,
+                commit_message=f"Add record: {event} {distance}m"
+            )
+
+            st.success("記録を追加しました！（GitHub にも反映済み）")
             st.rerun()
 
         except Exception as e:
@@ -316,13 +317,11 @@ if submitted:
 # ---------------------------------------------------------
 st.subheader("記録の修正・削除")
 
-# 行番号を付けた表示用データ
 edit_df = filtered.copy().reset_index(drop=True)
 edit_df["行番号"] = edit_df.index
 
 st.dataframe(edit_df[["行番号", "日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]])
 
-# 修正・削除する行番号を選択
 target_index = st.number_input("修正・削除する行番号を入力", min_value=0, max_value=len(edit_df)-1, step=1)
 
 target_row = edit_df.iloc[target_index]
@@ -352,13 +351,11 @@ if edit_submitted:
     if new_time_sec is None:
         st.error("タイムの形式が正しくありません")
     else:
-        # Excel 読み込み
         book = pd.read_excel(file_path, sheet_name=sheet_name)
         book = normalize_columns(book)
         book = book.iloc[:, :6]
         book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 
-        # 修正対象の行を置き換え
         book.loc[target_row.name] = [
             pd.to_datetime(e_date),
             e_grade,
@@ -368,9 +365,17 @@ if edit_submitted:
             e_place
         ]
 
-        # 保存
         book.to_excel(file_path, sheet_name=sheet_name, index=False)
-        st.success("修正しました！")
+
+        update_excel_to_github(
+            local_path=file_path,
+            repo=GITHUB_REPO,
+            file_path=GITHUB_FILE_PATH,
+            token=GITHUB_TOKEN,
+            commit_message=f"Edit record: {event} {distance}m"
+        )
+
+        st.success("修正しました！（GitHub にも反映済み）")
         st.rerun()
 
 # -------------------------
@@ -382,11 +387,17 @@ if st.button("この行を削除する"):
     book = book.iloc[:, :6]
     book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 
-    # 行削除
     book = book.drop(target_row.name)
 
-    # 保存
     book.to_excel(file_path, sheet_name=sheet_name, index=False)
-    st.success("削除しました！")
-    st.rerun()
 
+    update_excel_to_github(
+        local_path=file_path,
+        repo=GITHUB_REPO,
+        file_path=GITHUB_FILE_PATH,
+        token=GITHUB_TOKEN,
+        commit_message=f"Delete record: {event} {distance}m"
+    )
+
+    st.success("削除しました！（GitHub にも反映済み）")
+    st.rerun()
