@@ -157,19 +157,6 @@ event = st.selectbox("種目を選択してください", events)
 
 sheet_name = event
 
-data = pd.read_excel(local_excel, sheet_name=sheet_name)
-data = data.iloc[:, :6]
-data.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
-data = normalize_columns(data)
-
-# タイム変換
-data["タイム"] = data["タイム"].apply(time_to_seconds)
-
-# 距離を数値化
-data["距離"] = pd.to_numeric(data["距離"], errors="coerce")
-data = data.dropna(subset=["距離"])
-data["距離"] = data["距離"].astype(int)
-
 # ---------------------------------------------------------
 # 種目ごとのヘッダー色設定
 # ---------------------------------------------------------
@@ -213,6 +200,20 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+
+data = pd.read_excel(local_excel, sheet_name=sheet_name)
+data = data.iloc[:, :6]
+data.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
+data = normalize_columns(data)
+
+# タイム変換
+data["タイム"] = data["タイム"].apply(time_to_seconds)
+
+# 距離を数値化
+data["距離"] = pd.to_numeric(data["距離"], errors="coerce")
+data = data.dropna(subset=["距離"])
+data["距離"] = data["距離"].astype(int)
 
 # ---------------------------------------------------------
 # 距離選択
