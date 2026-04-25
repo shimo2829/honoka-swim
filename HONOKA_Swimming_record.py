@@ -11,8 +11,7 @@ from openpyxl import load_workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 import mplcursors
 import matplotlib.font_manager as fm
-fm.fontManager.addfont("ipaexg.ttf")
-plt.rcParams["font.family"] = "IPAexGothic"
+import plotly.express as px   # ← ここに追加！
 
 # ---------------------------------------------------------
 # ログイン（パスワード認証）
@@ -289,53 +288,52 @@ if filtered.empty:
     st.stop()
 
 # ---------------------------------------------------------
-# グラフ
+# Plotly グラフ用データ準備
 # ---------------------------------------------------------
 
-# ★ 日付＋学年のラベルを作成（追加）
 filtered["日付_学年"] = (
     filtered["日付"].dt.strftime("%Y-%m-%d") + "（" + filtered["学年"] + "）"
 )
 
-fig, ax = plt.subplots(figsize=(10, 5))
+filtered["タイム_表示"] = filtered["タイム"].apply(seconds_to_swim_format)
 
-# ★ x軸を「日付 → 日付_学年」に変更
-ax.plot(filtered["日付_学年"], filtered["タイム"], color="gray", linewidth=2)
+fig = px.scatter(
+    filtered,
+    x="日付_学年",
+    y="タイム",
+    color="長水路or短水路",
+    color_discrete_map={"長水路": "blue", "短水路": "red"},
+    hover_data={
+        "タイム": False,
+        "タイム_表示": True,
+        "日付": True,
+        "学年": True,
+        "日付_学年": False
+    },
+)
 
-color_map = {"長水路": "tab:blue", "短水路": "tab:red"}
+fig.add_scatter(
+    x=filtered["日付_学年"],
+    y=filtered["タイム"],
+    mode="lines",
+    line=dict(color="gray", width=2),
+    showlegend=False
+)
 
-for c in ["長水路", "短水路"]:
-    df_c = filtered[filtered["長水路or短水路"] == c]
-    if not df_c.empty:
-        ax.scatter(df_c["日付_学年"], df_c["タイム"], color=color_map[c], label=c, s=60)
+fig.update_layout(
+    title=f"{event} {distance}m（{course}）の記録推移",
+    xaxis_title="日付（学年）",
+    yaxis_title="タイム",
+    hoverlabel=dict(font_size=14),
+)
 
-ax.set_xlabel("日付（学年）")
-ax.set_ylabel("タイム")
-ax.set_title(f"{event} {distance}m（{course}）の記録推移")
-ax.grid(True)
+fig.update_yaxes(
+    tickmode="array",
+    tickvals=filtered["タイム"].unique(),
+    ticktext=[seconds_to_swim_format(t) for t in filtered["タイム"].unique()]
+)
 
-if course == "全記録":
-    ax.legend()
-
-# Y軸の競泳表記
-yticks = ax.get_yticks()
-ax.set_yticklabels([seconds_to_swim_format(t) for t in yticks])
-
-# ★ x軸の文字が重ならないように回転
-plt.xticks(rotation=45)
-
-st.write(fig)
-
-# ★ ポップアップ（ツールチップ）を追加
-cursor = mplcursors.cursor(ax, hover=True)
-
-@cursor.connect("add")
-def on_add(sel):
-    idx = sel.index
-    time_val = filtered.iloc[idx]["タイム"]
-    date_val = filtered.iloc[idx]["日付"].strftime("%Y-%m-%d")
-    grade_val = filtered.iloc[idx]["学年"]
-    sel.annotation.set(text=f"{seconds_to_swim_format(time_val)}\n{date_val}（{grade_val}）")
+st.plotly_chart(fig, use_container_width=True)
 
 # ---------------------------------------------------------
 # 最新記録
