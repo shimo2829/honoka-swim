@@ -9,6 +9,8 @@ import base64
 import requests
 from openpyxl import load_workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
+import mplcursors
+
 
 # ---------------------------------------------------------
 # ログイン（パスワード認証）
@@ -321,6 +323,17 @@ ax.set_yticklabels([seconds_to_swim_format(t) for t in yticks])
 plt.xticks(rotation=45)
 
 st.pyplot(fig)
+
+# ★ ポップアップ（ツールチップ）を追加
+cursor = mplcursors.cursor(ax, hover=True)
+
+@cursor.connect("add")
+def on_add(sel):
+    idx = sel.index
+    time_val = filtered.iloc[idx]["タイム"]
+    date_val = filtered.iloc[idx]["日付"].strftime("%Y-%m-%d")
+    grade_val = filtered.iloc[idx]["学年"]
+    sel.annotation.set(text=f"{seconds_to_swim_format(time_val)}\n{date_val}（{grade_val}）")
 
 # ---------------------------------------------------------
 # 最新記録
