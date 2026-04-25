@@ -10,7 +10,9 @@ import requests
 from openpyxl import load_workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 import mplcursors
-
+import matplotlib.font_manager as fm
+fm.fontManager.addfont("ipaexg.ttf")
+plt.rcParams["font.family"] = "IPAexGothic"
 
 # ---------------------------------------------------------
 # ログイン（パスワード認証）
@@ -322,7 +324,7 @@ ax.set_yticklabels([seconds_to_swim_format(t) for t in yticks])
 # ★ x軸の文字が重ならないように回転
 plt.xticks(rotation=45)
 
-st.pyplot(fig)
+st.write(fig)
 
 # ★ ポップアップ（ツールチップ）を追加
 cursor = mplcursors.cursor(ax, hover=True)
