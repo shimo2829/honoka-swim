@@ -443,4 +443,15 @@ if st.button("この行を削除する"):
 
     st.success("削除しました！（GitHub にも反映済み）")
     st.rerun()
+# ---------------------------------------------------------
+# 完全コードをファイルとしてダウンロードする機能
+# ---------------------------------------------------------
+full_code = open(__file__, "r", encoding="utf-8").read()
+
+st.download_button(
+    label="📄 このアプリの完全コードをダウンロード",
+    data=full_code,
+    file_name="HONOKA_full_code.py",
+    mime="text/plain"
+)
 
