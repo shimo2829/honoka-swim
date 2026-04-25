@@ -195,7 +195,7 @@ st.markdown(
     </style>
 
     <div class="header-title">
-        <span>FUKA Swimming record</span>
+        <span>HONOKA Swimming record</span>
         <span>{event}</span>
     </div>
     """,
