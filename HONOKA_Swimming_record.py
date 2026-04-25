@@ -157,51 +157,6 @@ event = st.selectbox("種目を選択してください", events)
 
 sheet_name = event
 
-# ---------------------------------------------------------
-# 種目ごとのヘッダー色設定
-# ---------------------------------------------------------
-event_colors = {
-    "フリー": "#1E90FF",
-    "バッタ": "#FF8C00",
-    "ブレ":   "#32CD32",
-    "バック": "#8A2BE2",
-    "メドレー": "#DC143C"
-}
-
-header_color = event_colors.get(event, "#000000")
-
-# ---------------------------------------------------------
-# 固定ヘッダー
-# ---------------------------------------------------------
-st.markdown(
-    f"""
-    <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background-color: {header_color};
-        padding: 18px 20px;
-        font-size: 36px;
-        font-weight: bold;
-        color: white;
-        text-align: center;
-        border-bottom: 3px solid #ddd;
-        z-index: 9999;
-    ">
-        {event}
-    </div>
-
-    <style>
-        .block-container {{
-            padding-top: 110px;
-        }}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-
 data = pd.read_excel(local_excel, sheet_name=sheet_name)
 data = data.iloc[:, :6]
 data.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
