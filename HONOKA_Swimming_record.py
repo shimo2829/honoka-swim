@@ -17,69 +17,6 @@ GITHUB_TOKEN = st.secrets["GITHUB_TOKEN"]
 GITHUB_REPO = st.secrets["GITHUB_REPO"]
 GITHUB_FILE_PATH = st.secrets["GITHUB_FILE_PATH"]
 
-
-# ---------------------------------------------------------
-# 種目ごとのヘッダー色設定
-# ---------------------------------------------------------
-event_colors = {
-    "フリー": "#1E90FF",   # 青
-    "バッタ": "#FF8C00",   # オレンジ
-    "ブレ":   "#32CD32",   # 緑
-    "バック": "#8A2BE2",   # 紫
-    "メドレー": "#DC143C"  # 赤
-}
-
-header_color = event_colors.get(event, "#000000")
-
-# ---------------------------------------------------------
-# 固定ヘッダー
-# ---------------------------------------------------------
-st.markdown(
-    f"""
-    <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background-color: {header_color};
-        padding: 18px 20px;
-        font-size: 36px;
-        font-weight: bold;
-        color: white;
-        text-align: center;
-        border-bottom: 3px solid #ddd;
-        z-index: 9999;
-    ">
-        {event}
-    </div>
-
-    <style>
-        .block-container {{
-            padding-top: 110px;
-        }}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-
-# ---------------------------------------------------------
-# GitHub から Excel を取得
-# ---------------------------------------------------------
-def download_excel_from_github(repo, file_path, token, local_path="temp.xlsx"):
-    url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
-    headers = {"Authorization": f"token {token}"}
-
-    res = requests.get(url, headers=headers)
-    if res.status_code == 200:
-        content = base64.b64decode(res.json()["content"])
-        with open(local_path, "wb") as f:
-            f.write(content)
-        return local_path
-    else:
-        st.error("GitHub からファイルを取得できませんでした")
-        return None
-
 # ---------------------------------------------------------
 # GitHub へ Excel をアップロード
 # ---------------------------------------------------------
