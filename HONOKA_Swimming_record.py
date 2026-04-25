@@ -276,7 +276,7 @@ with st.form("add_record_form"):
     new_distance = st.selectbox("距離", distance_list)
     new_course = st.selectbox("長水路 or 短水路", ["長水路", "短水路"])
     new_time_str = st.text_input("タイム（例：4'39\"09 または 01:41.11）")
-    new_place = st.text_input("会場", value="荒野スイミング")
+    new_place = st.text_input("会場", value="菰野スイミング")
 
     submitted = st.form_submit_button("追加する")
 
