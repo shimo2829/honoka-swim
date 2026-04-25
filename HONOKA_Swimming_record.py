@@ -77,6 +77,19 @@ def save_sheet_without_deleting_others(excel_path, sheet_name, df):
     wb.save(excel_path)
 
 # ---------------------------------------------------------
+# 列名を正規化
+# ---------------------------------------------------------
+def normalize_columns(df):
+    new_cols = []
+    for col in df.columns:
+        c = str(col)
+        c = c.replace(" ", "").replace("　", "")
+        c = c.replace("ヒヅケ", "日付")
+        new_cols.append(c)
+    df.columns = new_cols
+    return df
+
+# ---------------------------------------------------------
 # 競泳表記 → 秒
 # ---------------------------------------------------------
 def time_to_seconds(t):
