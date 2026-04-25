@@ -7,6 +7,8 @@ import re
 import math
 import base64
 import requests
+from openpyxl import load_workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
 
 # ---------------------------------------------------------
 # GitHub secrets 読み込み
@@ -16,7 +18,7 @@ GITHUB_REPO = st.secrets["GITHUB_REPO"]
 GITHUB_FILE_PATH = st.secrets["GITHUB_FILE_PATH"]
 
 # ---------------------------------------------------------
-# GitHub から Excel を取得する関数
+# GitHub から Excel を取得
 # ---------------------------------------------------------
 def download_excel_from_github(repo, file_path, token, local_path="temp.xlsx"):
     url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
@@ -33,7 +35,7 @@ def download_excel_from_github(repo, file_path, token, local_path="temp.xlsx"):
         return None
 
 # ---------------------------------------------------------
-# GitHub へ Excel をアップロードする関数
+# GitHub へ Excel をアップロード
 # ---------------------------------------------------------
 def update_excel_to_github(local_path, repo, file_path, token, commit_message="Update Excel"):
     url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
@@ -53,6 +55,26 @@ def update_excel_to_github(local_path, repo, file_path, token, commit_message="U
 
     res = requests.put(url, json=data, headers={"Authorization": f"token {token}"})
     return res.status_code in [200, 201]
+
+# ---------------------------------------------------------
+# 他のシートを消さずに、指定シートだけ更新する関数
+# ---------------------------------------------------------
+def save_sheet_without_deleting_others(excel_path, sheet_name, df):
+    wb = load_workbook(excel_path)
+
+    # 既存シートがあれば削除
+    if sheet_name in wb.sheetnames:
+        ws = wb[sheet_name]
+        wb.remove(ws)
+
+    # 新しいシートを作成
+    ws = wb.create_sheet(sheet_name)
+
+    # DataFrame を書き込み
+    for r in dataframe_to_rows(df, index=False, header=True):
+        ws.append(r)
+
+    wb.save(excel_path)
 
 # ---------------------------------------------------------
 # 日本語フォント設定
@@ -109,57 +131,6 @@ def normalize_columns(df):
     return df
 
 # ---------------------------------------------------------
-# 競泳表記 → 秒
-# ---------------------------------------------------------
-def time_to_seconds(t):
-    if t is None:
-        return None
-
-    if isinstance(t, pd.Timestamp):
-        return t.hour * 3600 + t.minute * 60 + t.second + t.microsecond / 1e6
-
-    if isinstance(t, (int, float)) and t > 30000:
-        return None
-
-    if isinstance(t, (int, float)):
-        if 0 < t < 1:
-            return t * 86400
-        else:
-            return float(t)
-
-    s = str(t).strip()
-    s = s.replace("：", ":")
-
-    m = re.match(r"(\d+)'(\d+)[\"”]?(\d+)", s)
-    if m:
-        minutes = int(m.group(1))
-        seconds = int(m.group(2))
-        ms = int(m.group(3))
-        return minutes * 60 + seconds + ms / 100
-
-    if ":" in s:
-        try:
-            m, sec = s.split(":")
-            return int(m) * 60 + float(sec)
-        except:
-            pass
-
-    try:
-        return float(s)
-    except:
-        return None
-
-# ---------------------------------------------------------
-# 秒 → 競泳表記
-# ---------------------------------------------------------
-def seconds_to_swim_format(sec):
-    if sec is None or (isinstance(sec, float) and math.isnan(sec)):
-        return "―"
-    m = int(sec // 60)
-    s = sec % 60
-    return f"{m}'{s:05.2f}"
-
-# ---------------------------------------------------------
 # GitHub から最新 Excel を取得
 # ---------------------------------------------------------
 local_excel = download_excel_from_github(GITHUB_REPO, GITHUB_FILE_PATH, GITHUB_TOKEN)
@@ -180,7 +151,10 @@ data = data.iloc[:, :6]
 data.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 data = normalize_columns(data)
 
+# タイム変換
 data["タイム"] = data["タイム"].apply(time_to_seconds)
+
+# 距離を数値化
 data["距離"] = pd.to_numeric(data["距離"], errors="coerce")
 data = data.dropna(subset=["距離"])
 data["距離"] = data["距離"].astype(int)
@@ -318,7 +292,9 @@ if submitted:
             book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 
             updated = pd.concat([book, new_row], ignore_index=True)
-            updated.to_excel(local_excel, sheet_name=sheet_name, index=False)
+
+            # 他のシートを消さずにこのシートだけ更新
+            save_sheet_without_deleting_others(local_excel, sheet_name, updated)
 
             # GitHub に反映
             update_excel_to_github(
@@ -388,7 +364,7 @@ if edit_submitted:
             e_place
         ]
 
-        book.to_excel(local_excel, sheet_name=sheet_name, index=False)
+        save_sheet_without_deleting_others(local_excel, sheet_name, book)
 
         update_excel_to_github(
             local_path=local_excel,
@@ -412,7 +388,7 @@ if st.button("この行を削除する"):
 
     book = book.drop(target_row.name)
 
-    book.to_excel(local_excel, sheet_name=sheet_name, index=False)
+    save_sheet_without_deleting_others(local_excel, sheet_name, book)
 
     update_excel_to_github(
         local_path=local_excel,
@@ -424,3 +400,4 @@ if st.button("この行を削除する"):
 
     st.success("削除しました！（GitHub にも反映済み）")
     st.rerun()
+
