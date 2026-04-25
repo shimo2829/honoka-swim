@@ -16,6 +16,23 @@ GITHUB_REPO = st.secrets["GITHUB_REPO"]
 GITHUB_FILE_PATH = st.secrets["GITHUB_FILE_PATH"]
 
 # ---------------------------------------------------------
+# GitHub から Excel を取得する関数
+# ---------------------------------------------------------
+def download_excel_from_github(repo, file_path, token, local_path="temp.xlsx"):
+    url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
+    headers = {"Authorization": f"token {token}"}
+
+    res = requests.get(url, headers=headers)
+    if res.status_code == 200:
+        content = base64.b64decode(res.json()["content"])
+        with open(local_path, "wb") as f:
+            f.write(content)
+        return local_path
+    else:
+        st.error("GitHub からファイルを取得できませんでした")
+        return None
+
+# ---------------------------------------------------------
 # GitHub へ Excel をアップロードする関数
 # ---------------------------------------------------------
 def update_excel_to_github(local_path, repo, file_path, token, commit_message="Update Excel"):
@@ -36,7 +53,6 @@ def update_excel_to_github(local_path, repo, file_path, token, commit_message="U
 
     res = requests.put(url, json=data, headers={"Authorization": f"token {token}"})
     return res.status_code in [200, 201]
-
 
 # ---------------------------------------------------------
 # 日本語フォント設定
@@ -144,16 +160,22 @@ def seconds_to_swim_format(sec):
     return f"{m}'{s:05.2f}"
 
 # ---------------------------------------------------------
+# GitHub から最新 Excel を取得
+# ---------------------------------------------------------
+local_excel = download_excel_from_github(GITHUB_REPO, GITHUB_FILE_PATH, GITHUB_TOKEN)
+
+if local_excel is None:
+    st.stop()
+
+# ---------------------------------------------------------
 # Excel 読み込み
 # ---------------------------------------------------------
-file_path = "穂果記録.xlsx"
-
 events = ["フリー", "バッタ", "ブレ", "バック", "メドレー"]
 event = st.selectbox("種目を選択してください", events)
 
 sheet_name = event
 
-data = pd.read_excel(file_path, sheet_name=sheet_name)
+data = pd.read_excel(local_excel, sheet_name=sheet_name)
 data = data.iloc[:, :6]
 data.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 data = normalize_columns(data)
@@ -289,17 +311,18 @@ if submitted:
         }])
 
         try:
-            book = pd.read_excel(file_path, sheet_name=sheet_name)
+            # GitHub の最新データを読み込む
+            book = pd.read_excel(local_excel, sheet_name=sheet_name)
             book = normalize_columns(book)
             book = book.iloc[:, :6]
             book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 
             updated = pd.concat([book, new_row], ignore_index=True)
-            updated.to_excel(file_path, sheet_name=sheet_name, index=False)
+            updated.to_excel(local_excel, sheet_name=sheet_name, index=False)
 
             # GitHub に反映
             update_excel_to_github(
-                local_path=file_path,
+                local_path=local_excel,
                 repo=GITHUB_REPO,
                 file_path=GITHUB_FILE_PATH,
                 token=GITHUB_TOKEN,
@@ -351,7 +374,7 @@ if edit_submitted:
     if new_time_sec is None:
         st.error("タイムの形式が正しくありません")
     else:
-        book = pd.read_excel(file_path, sheet_name=sheet_name)
+        book = pd.read_excel(local_excel, sheet_name=sheet_name)
         book = normalize_columns(book)
         book = book.iloc[:, :6]
         book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
@@ -365,10 +388,10 @@ if edit_submitted:
             e_place
         ]
 
-        book.to_excel(file_path, sheet_name=sheet_name, index=False)
+        book.to_excel(local_excel, sheet_name=sheet_name, index=False)
 
         update_excel_to_github(
-            local_path=file_path,
+            local_path=local_excel,
             repo=GITHUB_REPO,
             file_path=GITHUB_FILE_PATH,
             token=GITHUB_TOKEN,
@@ -382,17 +405,17 @@ if edit_submitted:
 # 削除ボタン
 # -------------------------
 if st.button("この行を削除する"):
-    book = pd.read_excel(file_path, sheet_name=sheet_name)
+    book = pd.read_excel(local_excel, sheet_name=sheet_name)
     book = normalize_columns(book)
     book = book.iloc[:, :6]
     book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 
     book = book.drop(target_row.name)
 
-    book.to_excel(file_path, sheet_name=sheet_name, index=False)
+    book.to_excel(local_excel, sheet_name=sheet_name, index=False)
 
     update_excel_to_github(
-        local_path=file_path,
+        local_path=local_excel,
         repo=GITHUB_REPO,
         file_path=GITHUB_FILE_PATH,
         token=GITHUB_TOKEN,
