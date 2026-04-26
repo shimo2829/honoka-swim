@@ -318,14 +318,14 @@ options = {
     "inverse": False,
     "min": y_range[0],
     "max": y_range[1],
-    "axisLabel": {
-        "formatter": """function (value) {
-            let m = Math.floor(value / 60);
-            let s = (value % 60).toFixed(2).padStart(5, '0');
-            return m + "'" + s;
-        }"""
-    }
-},
+   "axisLabel": {
+    "formatter": """function (value) {
+        let m = Math.floor(value / 60);
+        let s = (value % 60).toFixed(2).padStart(5, '0');
+        return m + "'" + s;
+    }"""
+}
+
 
     "dataZoom": [
         {"type": "inside"},
