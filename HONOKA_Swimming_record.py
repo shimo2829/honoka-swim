@@ -296,10 +296,8 @@ filtered["日付_学年"] = (
 
 filtered["タイム_表示"] = filtered["タイム"].apply(seconds_to_swim_format)
 
-# 日付順にソート
 filtered = filtered.sort_values("日付")
 
-# 散布図（点）
 fig = px.scatter(
     filtered,
     x="日付_学年",
@@ -309,13 +307,11 @@ fig = px.scatter(
     hover_data={"タイム_表示": True},
 )
 
-# ポップアップはタイムだけ
 fig.update_traces(
     hovertemplate="%{customdata[0]}",
     customdata=filtered[["タイム_表示"]],
 )
 
-# 折れ線（グレー）
 fig.add_scatter(
     x=filtered["日付_学年"],
     y=filtered["タイム"],
@@ -325,23 +321,21 @@ fig.add_scatter(
 )
 
 # ---------------------------------------------------------
-# ★ Y軸：自動レンジ（最新が見やすい位置になる）
+# ★ Y軸：自動レンジ + 表記だけ競泳形式
 # ---------------------------------------------------------
 fig.update_yaxes(
-    autorange=True,   # ← メドレーでも潰れない
+    autorange=True,
+    tickformat="m'%S.%2f"   # ← 競泳形式のフォーマット
 )
 
 # ---------------------------------------------------------
-# ★ X軸：日付順に固定
+# X軸：日付順に固定
 # ---------------------------------------------------------
 fig.update_xaxes(
     categoryorder="array",
     categoryarray=filtered["日付_学年"]
 )
 
-# ---------------------------------------------------------
-# レイアウト
-# ---------------------------------------------------------
 fig.update_layout(
     title=f"{event} {distance}m（{course}）の記録推移",
     xaxis_title="日付（学年）",
