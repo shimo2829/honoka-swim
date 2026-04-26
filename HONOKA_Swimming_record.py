@@ -322,7 +322,7 @@ options = {
     },
     "yAxis": {
         "type": "value",
-        "inverse": false,
+        "inverse": False,   # ← ここが原因だった（false → False）
         "axisLabel": {
             "formatter": """function (value) {
                 let m = Math.floor(value / 60);
@@ -332,8 +332,8 @@ options = {
         }
     },
     "dataZoom": [
-        {"type": "inside"},   # ← スワイプで上下スクロール可能
-        {"type": "slider"}    # ← 下にスライダーも出せる
+        {"type": "inside"},
+        {"type": "slider"}
     ],
     "series": [
         {
