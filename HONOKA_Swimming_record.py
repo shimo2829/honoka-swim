@@ -308,7 +308,7 @@ fig = px.scatter(
     color="長水路or短水路",
     color_discrete_map={"長水路": "blue", "短水路": "red"},
     hover_data={
-        "": True,   # ← ポップアップはこれだけ
+        "タイム": True,   # ← ポップアップはこれだけ
         "タイム": False,
         "日付": False,
         "学年": False,
