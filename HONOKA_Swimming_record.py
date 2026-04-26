@@ -298,6 +298,8 @@ y_max_raw = max(y_data)
 y_min = math.floor(y_min_raw / 2) * 2
 y_max = math.ceil(y_max_raw / 2) * 2
 
+from streamlit_echarts import st_echarts, JsCode
+
 # ---------------------------------------------------------
 # プロット色分け（長水路＝青、短水路＝赤）
 # ---------------------------------------------------------
@@ -359,21 +361,21 @@ options = {
         {"type": "inside"},
         {"type": "slider"}
     ],
-  "series": [
-    {
-        "type": "line",
-        "data": series_data,
-        "smooth": False,
-        "lineStyle": {"color": "gray", "width": 2},
-        "label": {
-            "show": True,
-            "position": "top",
-            "formatter": JsCode("function (p) { return p.data.label; }"),
-            "fontSize": 12
+    "series": [
+        {
+            "type": "line",
+            "data": series_data,
+            "smooth": False,
+            "lineStyle": {"color": "gray", "width": 2},
+            "label": {
+                "show": True,
+                "position": "top",
+                "formatter": JsCode("function (p) { return p.data.label; }"),
+                "fontSize": 12
+            }
         }
-    }
-]
-
+    ]
+}
 
 # ---------------------------------------------------------
 # グラフ描画
