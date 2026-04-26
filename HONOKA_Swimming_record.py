@@ -290,21 +290,6 @@ if filtered.empty:
 from streamlit_echarts import st_echarts
 
 # ---------------------------------------------------------
-# ECharts 用データ準備
-# ---------------------------------------------------------
-filtered["日付_学年"] = (
-    filtered["日付"].dt.strftime("%Y-%m-%d") + "（" + filtered["学年"] + "）"
-)
-
-filtered["タイム_表示"] = filtered["タイム"].apply(seconds_to_swim_format)
-
-x_data = filtered["日付_学年"].tolist()
-y_data = filtered["タイム"].tolist()
-y_label = filtered["タイム_表示"].tolist()
-
-from streamlit_echarts import st_echarts
-
-# ---------------------------------------------------------
 # ECharts オプション（完全版）
 # ---------------------------------------------------------
 options = {
@@ -348,11 +333,6 @@ options = {
         }
     ]
 }
-
-# ---------------------------------------------------------
-# グラフ描画
-# ---------------------------------------------------------
-st_echarts(options=options, height="500px")
 
 # ---------------------------------------------------------
 # ベストタイム
