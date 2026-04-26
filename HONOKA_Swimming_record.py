@@ -332,13 +332,15 @@ options = {
         {"type": "inside"},
         {"type": "slider"}
     ],
-    "series": [
-        {
-            "type": "line",
-            "data": [
-                {"value": y_data[i], "label": y_label[i]}
-                for i in range(len(y_data))
-            ],
+  "series": [
+    {
+        "type": "line",
+        "data": series_data,
+        "smooth": False,
+        "lineStyle": {"color": "gray", "width": 2}
+    }
+]
+
             "smooth": False,
             "lineStyle": {"color": "gray", "width": 2},
             "itemStyle": {
