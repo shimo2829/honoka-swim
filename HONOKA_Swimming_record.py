@@ -307,11 +307,13 @@ fig = px.scatter(
     hover_data={"タイム_表示": True},
 )
 
+# ポップアップは競泳形式だけ
 fig.update_traces(
     hovertemplate="%{customdata[0]}",
     customdata=filtered[["タイム_表示"]],
 )
 
+# 折れ線（グレー）
 fig.add_scatter(
     x=filtered["日付_学年"],
     y=filtered["タイム"],
@@ -320,17 +322,12 @@ fig.add_scatter(
     showlegend=False
 )
 
-# ---------------------------------------------------------
-# ★ Y軸：自動レンジ + 表記だけ競泳形式
-# ---------------------------------------------------------
+# ★ Y軸：自動レンジ（最新が見やすい）
 fig.update_yaxes(
-    autorange=True,
-    tickformat="m'%S.%2f"   # ← 競泳形式のフォーマット
+    autorange=True
 )
 
-# ---------------------------------------------------------
 # X軸：日付順に固定
-# ---------------------------------------------------------
 fig.update_xaxes(
     categoryorder="array",
     categoryarray=filtered["日付_学年"]
