@@ -294,12 +294,10 @@ if filtered.empty:
 # ---------------------------------------------------------
 # Plotly グラフ用データ準備
 # ---------------------------------------------------------
-# X軸：日付＋学年（例：2025-06-08（小5））
 filtered["日付_学年"] = (
     filtered["日付"].dt.strftime("%Y-%m-%d") + "（" + filtered["学年"] + "）"
 )
 
-# 競泳表記のタイム
 filtered["タイム_表示"] = filtered["タイム"].apply(seconds_to_swim_format)
 
 fig = px.scatter(
@@ -308,10 +306,10 @@ fig = px.scatter(
     y="タイム",
     color="長水路or短水路",
     color_discrete_map={"長水路": "blue", "短水路": "red"},
-    hover_data={"タイム_表示": True},  # タイムだけ渡す
+    hover_data={"タイム_表示": True},
 )
 
-# ★ hovertemplate で「タイム_表示＝」を消して数字だけにする
+# ★ ポップアップは数字だけ
 fig.update_traces(
     hovertemplate="%{customdata[0]}",
     customdata=filtered[["タイム_表示"]],
@@ -326,23 +324,28 @@ fig.add_scatter(
     showlegend=False
 )
 
-# レイアウト
+# ---------------------------------------------------------
+# ★ Y軸レンジを「等間隔」にする
+# ---------------------------------------------------------
+y_min = int(filtered["タイム"].min())      # 例：37
+y_max = int(filtered["タイム"].max())      # 例：47
+
+tick_vals = list(range(y_min, y_max + 1))   # 37,38,39,...47
+
+fig.update_yaxes(
+    range=[y_max + 1, y_min - 1],           # 少し余裕を持たせる
+    tickmode="array",
+    tickvals=tick_vals,
+    ticktext=[seconds_to_swim_format(t) for t in tick_vals]
+)
+
+# ---------------------------------------------------------
+
 fig.update_layout(
     title=f"{event} {distance}m（{course}）の記録推移",
     xaxis_title="日付（学年）",
     yaxis_title="タイム",
     hoverlabel=dict(font_size=14),
-)
-
-# ★ Y軸レンジを「データの最小〜最大」から少し余裕を持たせて固定
-y_min = filtered["タイム"].min()
-y_max = filtered["タイム"].max()
-
-fig.update_yaxes(
-    range=[y_max + 1, y_min - 1],  # 上下に少し余裕を持たせる
-    tickmode="array",
-    tickvals=sorted(filtered["タイム"].unique(), reverse=True),
-    ticktext=[seconds_to_swim_format(t) for t in sorted(filtered["タイム"].unique(), reverse=True)]
 )
 
 st.plotly_chart(fig, use_container_width=True)
