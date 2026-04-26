@@ -359,15 +359,21 @@ options = {
         {"type": "inside"},
         {"type": "slider"}
     ],
-    "series": [
-        {
-            "type": "line",
-            "data": series_data,
-            "smooth": False,
-            "lineStyle": {"color": "gray", "width": 2}
+  "series": [
+    {
+        "type": "line",
+        "data": series_data,
+        "smooth": False,
+        "lineStyle": {"color": "gray", "width": 2},
+        "label": {
+            "show": True,
+            "position": "top",
+            "formatter": JsCode("function (p) { return p.data.label; }"),
+            "fontSize": 12
         }
-    ]
-}
+    }
+]
+
 
 # ---------------------------------------------------------
 # グラフ描画
