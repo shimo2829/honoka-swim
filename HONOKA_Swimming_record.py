@@ -316,7 +316,6 @@ options = {
     }
 },
 
-    },
     "dataZoom": [
         {"type": "inside"},
         {"type": "slider"}
