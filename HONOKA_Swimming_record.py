@@ -327,7 +327,7 @@ tick_vals = list(range(y_min, y_max + 1))
 
 # ★ Y軸：上が速い・下が遅い
 fig.update_yaxes(
-    range=[y_max + 1, y_min - 1],
+    range=[y_min - 1, y_max + 1],   # ← 数字が大きいほど上
     tickmode="array",
     tickvals=tick_vals,
     ticktext=[seconds_to_swim_format(t) for t in tick_vals]
