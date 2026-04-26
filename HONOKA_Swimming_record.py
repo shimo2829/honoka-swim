@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib import font_manager
 import os
 import re
 import math
@@ -9,9 +7,7 @@ import base64
 import requests
 from openpyxl import load_workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
-import mplcursors
-import matplotlib.font_manager as fm
-import plotly.express as px   # ← これだけ追加でOK
+from streamlit_echarts import st_echarts
 
 # ---------------------------------------------------------
 # ログイン（パスワード認証）
@@ -82,15 +78,12 @@ def update_excel_to_github(local_path, repo, file_path, token, commit_message="U
 def save_sheet_without_deleting_others(excel_path, sheet_name, df):
     wb = load_workbook(excel_path)
 
-    # 既存シートがあれば削除
     if sheet_name in wb.sheetnames:
         ws = wb[sheet_name]
         wb.remove(ws)
 
-    # 新しいシートを作成
     ws = wb.create_sheet(sheet_name)
 
-    # DataFrame を書き込み
     for r in dataframe_to_rows(df, index=False, header=True):
         ws.append(r)
 
@@ -150,7 +143,6 @@ def time_to_seconds(t):
     except:
         return None
 
-
 # ---------------------------------------------------------
 # 秒 → 競泳表記
 # ---------------------------------------------------------
@@ -176,7 +168,7 @@ events = ["フリー", "バッタ", "ブレ", "バック", "メドレー"]
 event = st.selectbox("種目を選択してください", events)
 
 # ---------------------------------------------------------
-# ★ 固定ヘッダー（Cloud で100%表示される CSS）
+# 固定ヘッダー
 # ---------------------------------------------------------
 event_colors = {
     "フリー": "#1E90FF",
@@ -209,7 +201,6 @@ st.markdown(
             gap: 40px;
         }}
 
-        /* スマホ画面（幅600px以下）のときだけ小さくする */
         @media screen and (max-width: 600px) {{
             .header-title {{
                 font-size: 20px;
@@ -234,7 +225,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 # ---------------------------------------------------------
 # Excel 読み込み
 # ---------------------------------------------------------
@@ -245,10 +235,8 @@ data = data.iloc[:, :6]
 data.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 data = normalize_columns(data)
 
-# タイム変換
 data["タイム"] = data["タイム"].apply(time_to_seconds)
 
-# 距離を数値化
 data["距離"] = pd.to_numeric(data["距離"], errors="coerce")
 data = data.dropna(subset=["距離"])
 data["距離"] = data["距離"].astype(int)
@@ -287,7 +275,18 @@ if filtered.empty:
     st.error(f"{event} の {distance}m（{course}）のデータがありません")
     st.stop()
 
-from streamlit_echarts import st_echarts
+# ---------------------------------------------------------
+# ECharts 用データ準備
+# ---------------------------------------------------------
+filtered["日付_学年"] = (
+    filtered["日付"].dt.strftime("%Y-%m-%d") + "（" + filtered["学年"] + "）"
+)
+
+filtered["タイム_表示"] = filtered["タイム"].apply(seconds_to_swim_format)
+
+x_data = filtered["日付_学年"].tolist()
+y_data = filtered["タイム"].tolist()
+y_label = filtered["タイム_表示"].tolist()
 
 # ---------------------------------------------------------
 # ECharts オプション（完全版）
@@ -374,12 +373,11 @@ with st.form("add_record_form"):
     new_distance = st.selectbox("距離", distance_list)
     new_course = st.selectbox("長水路 or 短水路", ["長水路", "短水路"])
     new_time_str = st.text_input(
-    "タイム（入力方法）\n\n"
-    "【60秒未満】例：58秒11 → 58.11\n"
-    "【60秒以上】例：1分41秒58 → 1'41\"58\n\n"
-    "※ どちらの形式でも自動で変換されます"
-)
-
+        "タイム（入力方法）\n\n"
+        "【60秒未満】例：58秒11 → 58.11\n"
+        "【60秒以上】例：1分41秒58 → 1'41\"58\n\n"
+        "※ どちらの形式でも自動で変換されます"
+    )
     new_place = st.text_input("会場", value="菰野スイミング")
 
     submitted = st.form_submit_button("追加する")
@@ -498,19 +496,4 @@ if st.button("この行を削除する"):
     book = pd.read_excel(local_excel, sheet_name=sheet_name)
     book = normalize_columns(book)
     book = book.iloc[:, :6]
-    book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
-
-    book = book.drop(target_row.name)
-
-    save_sheet_without_deleting_others(local_excel, sheet_name, book)
-
-    update_excel_to_github(
-        local_path=local_excel,
-        repo=GITHUB_REPO,
-        file_path=GITHUB_FILE_PATH,
-        token=GITHUB_TOKEN,
-        commit_message=f"Delete record: {event} {distance}m"
-    )
-
-    st.success("削除しました！（GitHub にも反映済み）")
-    st.rerun()
+    book.columns = ["
