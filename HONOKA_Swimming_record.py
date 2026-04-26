@@ -320,8 +320,14 @@ fig.add_scatter(
     showlegend=False
 )
 
+# ★ Y軸のための値をここで定義（これが抜けていた）
+y_min = int(filtered["タイム"].min())
+y_max = int(filtered["タイム"].max())
+tick_vals = list(range(y_min, y_max + 1))
+
+# ★ Y軸：上が速い・下が遅い
 fig.update_yaxes(
-    range=[y_max + 1, y_min - 1],   # ← これが正しい向き
+    range=[y_max + 1, y_min - 1],
     tickmode="array",
     tickvals=tick_vals,
     ticktext=[seconds_to_swim_format(t) for t in tick_vals]
