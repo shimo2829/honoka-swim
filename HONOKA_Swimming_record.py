@@ -289,13 +289,19 @@ y_data = filtered["タイム"].tolist()
 y_label = filtered["タイム_表示"].tolist()
 
 # ---------------------------------------------------------
-# Y軸レンジ（2秒刻みで可変）
+# Y軸レンジ（メドレーは10秒刻み、他は2秒刻み）
 # ---------------------------------------------------------
 y_min_raw = min(y_data)
 y_max_raw = max(y_data)
 
-y_min = math.floor(y_min_raw / 2) * 2
-y_max = math.ceil(y_max_raw / 2) * 2
+if "メドレー" in event:
+    y_min = math.floor(y_min_raw / 10) * 10
+    y_max = math.ceil(y_max_raw / 10) * 10
+    y_interval = 10
+else:
+    y_min = math.floor(y_min_raw / 2) * 2
+    y_max = math.ceil(y_max_raw / 2) * 2
+    y_interval = 2
 
 from streamlit_echarts import st_echarts, JsCode
 
@@ -312,6 +318,20 @@ series_data = [
     }
     for i in range(len(y_data))
 ]
+
+# ---------------------------------------------------------
+# Y軸フォーマッタ（メドレーは分＋秒）
+# ---------------------------------------------------------
+if "メドレー" in event:
+    y_axis_formatter = JsCode("""
+        function (value) {
+            var min = Math.floor(value / 60);
+            var sec = value % 60;
+            return min + "'" + sec.toFixed(2).padStart(5, '0');
+        }
+    """)
+else:
+    y_axis_formatter = "{value}"
 
 # ---------------------------------------------------------
 # ECharts オプション
@@ -337,9 +357,9 @@ options = {
         "inverse": False,
         "min": y_min,
         "max": y_max,
-        "interval": 2,
+        "interval": y_interval,
         "axisLabel": {
-            "formatter": "{value}"
+            "formatter": y_axis_formatter
         }
     },
     "dataZoom": [
@@ -363,11 +383,13 @@ options = {
 }
 
 # ---------------------------------------------------------
-# Streamlit 側で凡例を表示（色も一致）
+# Streamlit 側で凡例（青丸・赤丸）
 # ---------------------------------------------------------
 st.markdown("""
-🟦 長水路　　🟥 短水路
-""")
+**凡例：**  
+<span style="color:#3366FF; font-size:20px;">●</span> 長水路　　
+<span style="color:#FF3333; font-size:20px;">●</span> 短水路
+""", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # グラフ描画
