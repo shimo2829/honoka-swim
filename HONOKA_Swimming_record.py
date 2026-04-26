@@ -294,19 +294,21 @@ if filtered.empty:
 # ---------------------------------------------------------
 # Plotly グラフ用データ準備
 # ---------------------------------------------------------
-# X軸は「2025-05」など月単位の表示にする
-filtered["日付_月"] = filtered["日付"].dt.strftime("%Y-%m")
+# X軸：日付＋学年
+filtered["日付_学年"] = (
+    filtered["日付"].dt.strftime("%Y-%m-%d") + "（" + filtered["学年"] + "）"
+)
 
 # 競泳表記のタイム
 filtered["タイム_表示"] = filtered["タイム"].apply(seconds_to_swim_format)
 
 fig = px.scatter(
     filtered,
-    x="日付_月",
+    x="日付_学年",
     y="タイム",
     color="長水路or短水路",
     color_discrete_map={"長水路": "blue", "短水路": "red"},
-    hover_data={"タイム_表示": True},  # ← タイムだけ渡す
+    hover_data={"タイム_表示": True},  # タイムだけ渡す
 )
 
 # ★ hovertemplate で「タイム_表示＝」を消して数字だけにする
@@ -317,7 +319,7 @@ fig.update_traces(
 
 # 折れ線（グレー）
 fig.add_scatter(
-    x=filtered["日付_月"],
+    x=filtered["日付_学年"],
     y=filtered["タイム"],
     mode="lines",
     line=dict(color="gray", width=2),
@@ -327,13 +329,14 @@ fig.add_scatter(
 # レイアウト
 fig.update_layout(
     title=f"{event} {distance}m（{course}）の記録推移",
-    xaxis_title="日付",
+    xaxis_title="日付（学年）",
     yaxis_title="タイム",
     hoverlabel=dict(font_size=14),
 )
 
-# Y軸を競泳表記に
+# ★ Y軸レンジを固定して見た目をそろえる（例：0'50〜0'42）
 fig.update_yaxes(
+    range=[50, 42],  # ← 秒数で指定（必要なら調整OK）
     tickmode="array",
     tickvals=filtered["タイム"].unique(),
     ticktext=[seconds_to_swim_format(t) for t in filtered["タイム"].unique()]
