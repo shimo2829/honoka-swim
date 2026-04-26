@@ -294,7 +294,7 @@ if filtered.empty:
 # ---------------------------------------------------------
 # Plotly グラフ用データ準備
 # ---------------------------------------------------------
-# X軸：日付＋学年
+# X軸：日付＋学年（例：2025-06-08（小5））
 filtered["日付_学年"] = (
     filtered["日付"].dt.strftime("%Y-%m-%d") + "（" + filtered["学年"] + "）"
 )
@@ -334,12 +334,12 @@ fig.update_layout(
     hoverlabel=dict(font_size=14),
 )
 
-# ★ Y軸レンジを固定して見た目をそろえる（例：0'50〜0'42）
+# ★ Y軸レンジを自動ではなく「データの最小〜最大」に合わせて揃える
 fig.update_yaxes(
-    range=[50, 42],  # ← 秒数で指定（必要なら調整OK）
+    range=[filtered["タイム"].max() + 1, filtered["タイム"].min() - 1],
     tickmode="array",
-    tickvals=filtered["タイム"].unique(),
-    ticktext=[seconds_to_swim_format(t) for t in filtered["タイム"].unique()]
+    tickvals=sorted(filtered["タイム"].unique(), reverse=True),
+    ticktext=[seconds_to_swim_format(t) for t in sorted(filtered["タイム"].unique(), reverse=True)]
 )
 
 st.plotly_chart(fig, use_container_width=True)
