@@ -301,76 +301,62 @@ y_max = math.ceil(y_max_raw / 2) * 2
 from streamlit_echarts import st_echarts, JsCode
 
 # ---------------------------------------------------------
-# プロット色分け（長水路＝青、短水路＝赤）
+# series を2本に分ける（全記録のとき）
 # ---------------------------------------------------------
 if course == "全記録":
-    # 点ごとに色を変える
-    series_data = [
-        {
+    long_data = []
+    short_data = []
+
+    for i in range(len(y_data)):
+        item = {
             "value": y_data[i],
             "label": y_label[i],
-            "itemStyle": {
-                "color": "#3366FF" if filtered["長水路or短水路"].iloc[i] == "長水路" else "#FF3333"
+        }
+        if filtered["長水路or短水路"].iloc[i] == "長水路":
+            item["itemStyle"] = {"color": "#3366FF"}
+            long_data.append(item)
+            short_data.append(None)  # 位置合わせ
+        else:
+            item["itemStyle"] = {"color": "#FF3333"}
+            short_data.append(item)
+            long_data.append(None)
+
+    series_list = [
+        {
+            "name": "長水路",
+            "type": "line",
+            "data": long_data,
+            "connectNulls": False,
+            "lineStyle": {"color": "gray", "width": 2},
+            "label": {
+                "show": True,
+                "position": "top",
+                "formatter": JsCode("function (p) { return p.data ? p.data.label : ''; }"),
+                "fontSize": 12
+            }
+        },
+        {
+            "name": "短水路",
+            "type": "line",
+            "data": short_data,
+            "connectNulls": False,
+            "lineStyle": {"color": "gray", "width": 2},
+            "label": {
+                "show": True,
+                "position": "top",
+                "formatter": JsCode("function (p) { return p.data ? p.data.label : ''; }"),
+                "fontSize": 12
             }
         }
-        for i in range(len(y_data))
     ]
-    series_name = "長水路 / 短水路"
+
+    legend_data = ["長水路", "短水路"]
+
 else:
     # 単独（長水路 or 短水路）
-    series_data = [
+    series_list = [
         {
-            "value": y_data[i],
-            "label": y_label[i],
-            "itemStyle": {
-                "color": "#3366FF" if course == "長水路" else "#FF3333"
-            }
-        }
-        for i in range(len(y_data))
-    ]
-    series_name = course  # ← 長水路 or 短水路
-
-# ---------------------------------------------------------
-# ECharts オプション
-# ---------------------------------------------------------
-options = {
-    "title": {
-        "text": f"{event} {distance}m（{course}）の記録推移"
-    },
-    "tooltip": {
-        "trigger": "axis",
-        "formatter": JsCode("""
-            function (params) {
-                return params[0].data.label;
-            }
-        """)
-    },
-   "legend": {
-    "data": [series_name],
-    "textStyle": {"color": "#000"}  # ← これで見える！
-},
-
-    "xAxis": {
-        "type": "category",
-        "data": x_data
-    },
-    "yAxis": {
-        "type": "value",
-        "inverse": False,
-        "min": y_min,
-        "max": y_max,
-        "interval": 2,
-        "axisLabel": {
-            "formatter": "{value}"
-        }
-    },
-    "dataZoom": [
-        {"type": "inside"},
-        {"type": "slider"}
-    ],
-    "series": [
-        {
-            "name": series_name,   # ← ここが超重要！
+            "name": course,
             "type": "line",
             "data": series_data,
             "smooth": False,
@@ -383,9 +369,42 @@ options = {
             }
         }
     ]
+    legend_data = [course]
+
+# ---------------------------------------------------------
+# ECharts オプション
+# ---------------------------------------------------------
+options = {
+    "title": {"text": f"{event} {distance}m（{course}）の記録推移"},
+    "tooltip": {
+        "trigger": "axis",
+        "formatter": JsCode("""
+            function (params) {
+                return params[0].data.label;
+            }
+        """)
+    },
+    "legend": {
+        "data": legend_data,
+        "top": 0,
+        "left": "center",
+        "textStyle": {"color": "#000"}
+    },
+    "xAxis": {"type": "category", "data": x_data},
+    "yAxis": {
+        "type": "value",
+        "inverse": False,
+        "min": y_min,
+        "max": y_max,
+        "interval": 2,
+        "axisLabel": {"formatter": "{value}"}
+    },
+    "dataZoom": [{"type": "inside"}, {"type": "slider"}],
+    "series": series_list
 }
 
 st_echarts(options=options, height="500px")
+
 
 # ---------------------------------------------------------
 # ベストタイム
