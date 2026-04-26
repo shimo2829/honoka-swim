@@ -345,9 +345,11 @@ options = {
             }
         """)
     },
-    "legend": {
-        "data": [series_name]   # ← これで凡例が出る！
-    },
+   "legend": {
+    "data": [series_name],
+    "textStyle": {"color": "#000"}  # ← これで見える！
+},
+
     "xAxis": {
         "type": "category",
         "data": x_data
