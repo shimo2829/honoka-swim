@@ -287,8 +287,10 @@ if filtered.empty:
     st.error(f"{event} の {distance}m（{course}）のデータがありません")
     st.stop()
 
+from streamlit_echarts import st_echarts
+
 # ---------------------------------------------------------
-# Plotly グラフ用データ準備
+# ECharts 用データ準備
 # ---------------------------------------------------------
 filtered["日付_学年"] = (
     filtered["日付"].dt.strftime("%Y-%m-%d") + "（" + filtered["学年"] + "）"
@@ -296,57 +298,63 @@ filtered["日付_学年"] = (
 
 filtered["タイム_表示"] = filtered["タイム"].apply(seconds_to_swim_format)
 
-# 日付順にソート
-filtered = filtered.sort_values("日付")
-
-# 散布図（点）
-fig = px.scatter(
-    filtered,
-    x="日付_学年",
-    y="タイム",
-    color="長水路or短水路",
-    color_discrete_map={"長水路": "blue", "短水路": "red"},
-    hover_data={"タイム_表示": True},
-)
-
-fig.update_traces(
-    hovertemplate="%{customdata[0]}",
-    customdata=filtered[["タイム_表示"]],
-)
-
-fig.add_scatter(
-    x=filtered["日付_学年"],
-    y=filtered["タイム"],
-    mode="lines",
-    line=dict(color="gray", width=2),
-    showlegend=False
-)
-
-fig.update_yaxes(autorange=True)
-
-fig.update_xaxes(
-    categoryorder="array",
-    categoryarray=filtered["日付_学年"]
-)
-
-fig.update_layout(
-    title=f"{event} {distance}m（{course}）の記録推移",
-    xaxis_title="日付（学年）",
-    yaxis_title="タイム",
-    hoverlabel=dict(font_size=14),
-)
-
-st.plotly_chart(fig, use_container_width=True)
+x_data = filtered["日付_学年"].tolist()
+y_data = filtered["タイム"].tolist()
+y_label = filtered["タイム_表示"].tolist()
 
 # ---------------------------------------------------------
-# 最新記録
+# ECharts オプション
 # ---------------------------------------------------------
-latest = filtered.iloc[-1]
+options = {
+    "title": {
+        "text": f"{event} {distance}m（{course}）の記録推移"
+    },
+    "tooltip": {
+        "trigger": "axis",
+        "formatter": """function (params) {
+            return params[0].axisValue + "<br/>" +
+                   "タイム：" + params[0].data.label;
+        }"""
+    },
+    "xAxis": {
+        "type": "category",
+        "data": x_data,
+    },
+    "yAxis": {
+        "type": "value",
+        "inverse": false,
+        "axisLabel": {
+            "formatter": """function (value) {
+                let m = Math.floor(value / 60);
+                let s = (value % 60).toFixed(2).padStart(5, '0');
+                return m + "'" + s;
+            }"""
+        }
+    },
+    "dataZoom": [
+        {"type": "inside"},   # ← スワイプで上下スクロール可能
+        {"type": "slider"}    # ← 下にスライダーも出せる
+    ],
+    "series": [
+        {
+            "type": "line",
+            "data": [
+                {"value": y_data[i], "label": y_label[i]}
+                for i in range(len(y_data))
+            ],
+            "smooth": False,
+            "lineStyle": {"color": "gray", "width": 2},
+            "itemStyle": {
+                "color": "#FF3333" if course == "短水路" else "#3366FF"
+            }
+        }
+    ]
+}
 
-st.subheader("最新の記録")
-st.write(f"日付：{latest['日付']}")
-st.write(f"タイム：{seconds_to_swim_format(latest['タイム'])}")
-st.write(f"会場：{latest['会場']}")
+# ---------------------------------------------------------
+# グラフ描画
+# ---------------------------------------------------------
+st_echarts(options=options, height="500px")
 
 # ---------------------------------------------------------
 # ベストタイム
