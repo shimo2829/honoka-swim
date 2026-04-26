@@ -321,14 +321,13 @@ options = {
         "data": x_data,
     },
     "yAxis": {
-        "type": "value",
-        "inverse": False,   # ← ここが原因だった（false → False）
-        "axisLabel": {
-            "formatter": """function (value) {
-                let m = Math.floor(value / 60);
-                let s = (value % 60).toFixed(2).padStart(5, '0');
-                return m + "'" + s;
-            }"""
+    "type": "value",
+    "inverse": False,
+    "axisLabel": {
+        "formatter": "function (value) { let m = Math.floor(value / 60); let s = (value % 60).toFixed(2).padStart(5, '0'); return m + \"'\" + s; }"
+    }
+}
+
         }
     },
     "dataZoom": [
