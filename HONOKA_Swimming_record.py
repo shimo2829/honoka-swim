@@ -7,7 +7,7 @@ import base64
 import requests
 from openpyxl import load_workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
-from streamlit_echarts import st_echarts
+from streamlit_echarts import st_echarts, JsCode 
 
 # ---------------------------------------------------------
 # ログイン（パスワード認証）
