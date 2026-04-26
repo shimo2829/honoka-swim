@@ -302,8 +302,10 @@ x_data = filtered["日付_学年"].tolist()
 y_data = filtered["タイム"].tolist()
 y_label = filtered["タイム_表示"].tolist()
 
+from streamlit_echarts import st_echarts
+
 # ---------------------------------------------------------
-# ECharts オプション
+# ECharts オプション（完全版）
 # ---------------------------------------------------------
 options = {
     "title": {
@@ -318,16 +320,13 @@ options = {
     },
     "xAxis": {
         "type": "category",
-        "data": x_data,
+        "data": x_data
     },
     "yAxis": {
-    "type": "value",
-    "inverse": False,
-    "axisLabel": {
-        "formatter": "function (value) { let m = Math.floor(value / 60); let s = (value % 60).toFixed(2).padStart(5, '0'); return m + \"'\" + s; }"
-    }
-}
-
+        "type": "value",
+        "inverse": False,
+        "axisLabel": {
+            "formatter": "function (value) { let m = Math.floor(value / 60); let s = (value % 60).toFixed(2).padStart(5, '0'); return m + \"'\" + s; }"
         }
     },
     "dataZoom": [
