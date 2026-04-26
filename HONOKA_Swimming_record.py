@@ -298,6 +298,7 @@ filtered["日付_学年"] = (
     filtered["日付"].dt.strftime("%Y-%m-%d") + "（" + filtered["学年"] + "）"
 )
 
+# 競泳表記のタイム
 filtered["タイム_表示"] = filtered["タイム"].apply(seconds_to_swim_format)
 
 fig = px.scatter(
@@ -307,11 +308,12 @@ fig = px.scatter(
     color="長水路or短水路",
     color_discrete_map={"長水路": "blue", "短水路": "red"},
     hover_data={
-        "タイム_表示": True,  # ← これだけ表示
+        "タイム_表示": True,   # ← ポップアップはこれだけ
         "タイム": False,
         "日付": False,
         "学年": False,
         "日付_学年": False,
+        "長水路or短水路": False
     },
 )
 
