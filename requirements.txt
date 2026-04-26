@@ -5,3 +5,4 @@ openpyxl
 requests
 mplcursors
 plotly
+streamlit-echarts
