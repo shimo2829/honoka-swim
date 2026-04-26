@@ -294,15 +294,12 @@ if filtered.empty:
 # ---------------------------------------------------------
 # Plotly グラフ用データ準備
 # ---------------------------------------------------------
-# X軸：日付＋学年
 filtered["日付_学年"] = (
     filtered["日付"].dt.strftime("%Y-%m-%d") + "（" + filtered["学年"] + "）"
 )
 
-# 競泳表記のタイム
 filtered["タイム_表示"] = filtered["タイム"].apply(seconds_to_swim_format)
 
-# ★ 日付でソート（線の結び方が正しくなる）
 filtered = filtered.sort_values("日付")
 
 fig = px.scatter(
@@ -314,13 +311,11 @@ fig = px.scatter(
     hover_data={"タイム_表示": True},
 )
 
-# ★ ポップアップは数字だけ
 fig.update_traces(
     hovertemplate="%{customdata[0]}",
     customdata=filtered[["タイム_表示"]],
 )
 
-# 折れ線（グレー）
 fig.add_scatter(
     x=filtered["日付_学年"],
     y=filtered["タイム"],
@@ -329,33 +324,23 @@ fig.add_scatter(
     showlegend=False
 )
 
-# ---------------------------------------------------------
-# ★ Y軸を「上が小さい・下が大きい」＋「等間隔」にする
-# ---------------------------------------------------------
-y_min = int(filtered["タイム"].min())   # 例：37
-y_max = int(filtered["タイム"].max())   # 例：47
-
-tick_vals = list(range(y_min, y_max + 1))  # 37〜47 の等間隔
+# ★ Y軸：上が小さい・下が大きい（競泳グラフの正しい向き）
+y_min = int(filtered["タイム"].min())
+y_max = int(filtered["タイム"].max())
+tick_vals = list(range(y_min, y_max + 1))
 
 fig.update_yaxes(
-    range=[y_min - 1, y_max + 1],  # ← 上が小さい・下が大きい
+    range=[y_max + 1, y_min - 1],   # ← これが正しい
     tickmode="array",
     tickvals=tick_vals,
     ticktext=[seconds_to_swim_format(t) for t in tick_vals]
 )
 
-# ---------------------------------------------------------
-
-fig.update_layout(
-    title=f"{event} {distance}m（{course}）の記録推移",
-    xaxis_title="日付（学年）",
-    yaxis_title="タイム",
-    hoverlabel=dict(font_size=14),
+# ★ X軸：日付順に固定
+fig.update_xaxes(
+    categoryorder="array",
+    categoryarray=filtered["日付_学年"]
 )
-
-st.plotly_chart(fig, use_container_width=True)
-
-# ---------------------------------------------------------
 
 fig.update_layout(
     title=f"{event} {distance}m（{course}）の記録推移",
