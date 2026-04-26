@@ -296,8 +296,10 @@ filtered["日付_学年"] = (
 
 filtered["タイム_表示"] = filtered["タイム"].apply(seconds_to_swim_format)
 
+# 日付順にソート
 filtered = filtered.sort_values("日付")
 
+# 散布図（点）
 fig = px.scatter(
     filtered,
     x="日付_学年",
@@ -307,11 +309,13 @@ fig = px.scatter(
     hover_data={"タイム_表示": True},
 )
 
+# ポップアップはタイムだけ
 fig.update_traces(
     hovertemplate="%{customdata[0]}",
     customdata=filtered[["タイム_表示"]],
 )
 
+# 折れ線（グレー）
 fig.add_scatter(
     x=filtered["日付_学年"],
     y=filtered["タイム"],
@@ -320,25 +324,24 @@ fig.add_scatter(
     showlegend=False
 )
 
-# ★ Y軸のための値をここで定義（これが抜けていた）
-y_min = int(filtered["タイム"].min())
-y_max = int(filtered["タイム"].max())
-tick_vals = list(range(y_min, y_max + 1))
-
-# ★ Y軸：上が速い・下が遅い
+# ---------------------------------------------------------
+# ★ Y軸：自動レンジ（最新が見やすい位置になる）
+# ---------------------------------------------------------
 fig.update_yaxes(
-    range=[y_min - 1, y_max + 1],   # ← 数字が大きいほど上
-    tickmode="array",
-    tickvals=tick_vals,
-    ticktext=[seconds_to_swim_format(t) for t in tick_vals]
+    autorange=True,   # ← メドレーでも潰れない
 )
 
+# ---------------------------------------------------------
 # ★ X軸：日付順に固定
+# ---------------------------------------------------------
 fig.update_xaxes(
     categoryorder="array",
     categoryarray=filtered["日付_学年"]
 )
 
+# ---------------------------------------------------------
+# レイアウト
+# ---------------------------------------------------------
 fig.update_layout(
     title=f"{event} {distance}m（{course}）の記録推移",
     xaxis_title="日付（学年）",
