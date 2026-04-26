@@ -332,7 +332,37 @@ options = {
         {"type": "inside"},
         {"type": "slider"}
     ],
-  "series": [
+ 
+# ---------------------------------------------------------
+# プロット色分け（長水路＝青、短水路＝赤）
+# ---------------------------------------------------------
+if course == "全記録":
+    # 点ごとに色を変える
+    series_data = [
+        {
+            "value": y_data[i],
+            "label": y_label[i],
+            "itemStyle": {
+                "color": "#3366FF" if filtered["長水路or短水路"].iloc[i] == "長水路" else "#FF3333"
+            }
+        }
+        for i in range(len(y_data))
+    ]
+else:
+    # 単独（長水路 or 短水路）
+    series_data = [
+        {
+            "value": y_data[i],
+            "label": y_label[i],
+            "itemStyle": {
+                "color": "#3366FF" if course == "長水路" else "#FF3333"
+            }
+        }
+        for i in range(len(y_data))
+    ]
+
+    
+    "series": [
     {
         "type": "line",
         "data": series_data,
