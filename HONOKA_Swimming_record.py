@@ -289,14 +289,17 @@ y_data = filtered["タイム"].tolist()
 y_label = filtered["タイム_表示"].tolist()
 
 # ---------------------------------------------------------
-# Y軸レンジ（競泳用に最適化）
+# Y軸レンジ（2秒刻みで可変）
 # ---------------------------------------------------------
-y_min = min(y_data)
-y_max = max(y_data)
-y_range = [y_min - 1, y_max + 1]
+y_min_raw = min(y_data)
+y_max_raw = max(y_data)
+
+# 2秒刻みに揃える
+y_min = math.floor(y_min_raw / 2) * 2
+y_max = math.ceil(y_max_raw / 2) * 2
 
 # ---------------------------------------------------------
-# ECharts オプション（完全クリーン版）
+# ECharts オプション
 # ---------------------------------------------------------
 options = {
     "title": {
@@ -316,14 +319,11 @@ options = {
     "yAxis": {
         "type": "value",
         "inverse": False,
-        "min": y_range[0],
-        "max": y_range[1],
+        "min": y_min,
+        "max": y_max,
+        "interval": 2,   # ★ 2秒刻み
         "axisLabel": {
-            "formatter": """function (value) {
-                let m = Math.floor(value / 60);
-                let s = (value % 60).toFixed(2).padStart(5, '0');
-                return m + "'" + s;
-            }"""
+            "formatter": "{value}"   # ★ 数値のまま表示
         }
     },
     "dataZoom": [
@@ -345,7 +345,6 @@ options = {
         }
     ]
 }
-
 
 # ---------------------------------------------------------
 # グラフ描画
