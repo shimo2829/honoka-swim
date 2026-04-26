@@ -320,10 +320,12 @@ fig.add_scatter(
     showlegend=False
 )
 
-# ★ Y軸：上が小さい・下が大きい（競泳グラフの正しい向き）
-y_min = int(filtered["タイム"].min())
-y_max = int(filtered["タイム"].max())
-tick_vals = list(range(y_min, y_max + 1))
+fig.update_yaxes(
+    range=[y_max + 1, y_min - 1],   # ← これが正しい向き
+    tickmode="array",
+    tickvals=tick_vals,
+    ticktext=[seconds_to_swim_format(t) for t in tick_vals]
+)
 
 fig.update_yaxes(
     range=[y_max + 1, y_min - 1],   # ← これが正しい
