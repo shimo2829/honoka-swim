@@ -305,7 +305,7 @@ options = {
     "title": {
         "text": f"{event} {distance}m（{course}）の記録推移"
     },
-  "tooltip": {
+ "tooltip": {
     "trigger": "axis",
     "formatter": """
         function (params) {
@@ -313,7 +313,6 @@ options = {
         }
     """
 },
-
 
     "xAxis": {
         "type": "category",
