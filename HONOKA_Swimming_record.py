@@ -289,6 +289,13 @@ y_data = filtered["タイム"].tolist()
 y_label = filtered["タイム_表示"].tolist()
 
 # ---------------------------------------------------------
+# Y軸レンジ（競泳用に最適化）
+# ---------------------------------------------------------
+y_min = min(y_data)
+y_max = max(y_data)
+y_range = [y_min - 1, y_max + 1]
+
+# ---------------------------------------------------------
 # ECharts オプション（完全版）
 # ---------------------------------------------------------
 options = {
@@ -306,16 +313,15 @@ options = {
         "type": "category",
         "data": x_data
     },
-  "yAxis": {
-    "type": "value",
-    "inverse": False,
-    "min": y_range[0],
-    "max": y_range[1],
-    "axisLabel": {
-        "formatter": "function (value) { let m = Math.floor(value / 60); let s = (value % 60).toFixed(2).padStart(5, '0'); return m + \"'\" + s; }"
-    }
-},
-
+    "yAxis": {
+        "type": "value",
+        "inverse": False,
+        "min": y_range[0],
+        "max": y_range[1],
+        "axisLabel": {
+            "formatter": "function (value) { let m = Math.floor(value / 60); let s = (value % 60).toFixed(2).padStart(5, '0'); return m + \"'\" + s; }"
+        }
+    },
     "dataZoom": [
         {"type": "inside"},
         {"type": "slider"}
@@ -491,27 +497,3 @@ if edit_submitted:
 
         st.success("修正しました！（GitHub にも反映済み）")
         st.rerun()
-
-# -------------------------
-# 削除ボタン
-# -------------------------
-if st.button("この行を削除する"):
-    book = pd.read_excel(local_excel, sheet_name=sheet_name)
-    book = normalize_columns(book)
-    book = book.iloc[:, :6]
-    book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
-
-    book = book.drop(target_row.name)
-
-    save_sheet_without_deleting_others(local_excel, sheet_name, book)
-
-    update_excel_to_github(
-        local_path=local_excel,
-        repo=GITHUB_REPO,
-        file_path=GITHUB_FILE_PATH,
-        token=GITHUB_TOKEN,
-        commit_message=f"Delete record: {event} {distance}m"
-    )
-
-    st.success("削除しました！（GitHub にも反映済み）")
-    st.rerun()
