@@ -334,9 +334,12 @@ fig.update_layout(
     hoverlabel=dict(font_size=14),
 )
 
-# ★ Y軸レンジを自動ではなく「データの最小〜最大」に合わせて揃える
+# ★ Y軸レンジを「データの最小〜最大」から少し余裕を持たせて固定
+y_min = filtered["タイム"].min()
+y_max = filtered["タイム"].max()
+
 fig.update_yaxes(
-    range=[filtered["タイム"].max() + 1, filtered["タイム"].min() - 1],
+    range=[y_max + 1, y_min - 1],  # 上下に少し余裕を持たせる
     tickmode="array",
     tickvals=sorted(filtered["タイム"].unique(), reverse=True),
     ticktext=[seconds_to_swim_format(t) for t in sorted(filtered["タイム"].unique(), reverse=True)]
