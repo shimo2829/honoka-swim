@@ -294,7 +294,6 @@ if filtered.empty:
 # ---------------------------------------------------------
 # Plotly グラフ用データ準備
 # ---------------------------------------------------------
-
 filtered["日付_学年"] = (
     filtered["日付"].dt.strftime("%Y-%m-%d") + "（" + filtered["学年"] + "）"
 )
@@ -308,11 +307,11 @@ fig = px.scatter(
     color="長水路or短水路",
     color_discrete_map={"長水路": "blue", "短水路": "red"},
     hover_data={
-        "タイム": False,
-        "タイム_表示": True,
-        "日付": True,
-        "学年": True,
-        "日付_学年": False
+        "タイム_表示": True,   # ← 競泳表記のタイム
+        "日付": True,         # ← 日付
+        "学年": True,         # ← 学年
+        "タイム": False,      # ← 生の秒数は非表示
+        "日付_学年": False    # ← X軸ラベルは非表示
     },
 )
 
@@ -338,6 +337,7 @@ fig.update_yaxes(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
 
 # ---------------------------------------------------------
 # 最新記録
