@@ -302,8 +302,7 @@ filtered["タイム_表示"] = filtered["タイム"].apply(seconds_to_swim_forma
 
 fig = px.scatter(
     filtered,
-    x="日付_学年",
-    y="タイム",
+       y="タイム",
         color_discrete_map={"長水路": "blue", "短水路": "red"},
     hover_data={
         "タイム": True,   # ← 競泳表記のタイム
@@ -311,8 +310,7 @@ fig = px.scatter(
 )
 
 fig.add_scatter(
-    x=filtered["日付_学年"],
-    y=filtered["タイム"],
+       y=filtered["タイム"],
     mode="lines",
     line=dict(color="gray", width=2),
     showlegend=False
@@ -320,8 +318,7 @@ fig.add_scatter(
 
 fig.update_layout(
     title=f"{event} {distance}m（{course}）の記録推移",
-    xaxis_title="日付（学年）",
-    yaxis_title="タイム",
+       yaxis_title="タイム",
     hoverlabel=dict(font_size=14),
 )
 
