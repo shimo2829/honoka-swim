@@ -306,12 +306,15 @@ options = {
         "text": f"{event} {distance}m（{course}）の記録推移"
     },
     "tooltip": {
-        "trigger": "axis",
-        "formatter": """function (params) {
+    "trigger": "axis",
+    "formatter": """
+        function (params) {
             return params[0].axisValue + "<br/>" +
                    "タイム：" + params[0].data.label;
-        }"""
-    },
+        }
+    """
+},
+
     "xAxis": {
         "type": "category",
         "data": x_data
