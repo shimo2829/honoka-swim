@@ -307,9 +307,11 @@ fig = px.scatter(
     color="長水路or短水路",
     color_discrete_map={"長水路": "blue", "短水路": "red"},
     hover_data={
-        "日付": True,
-        "学年": True,
-        "タイム": False
+        "タイム_表示": True,  # ← これだけ表示
+        "タイム": False,
+        "日付": False,
+        "学年": False,
+        "日付_学年": False,
     },
 )
 
