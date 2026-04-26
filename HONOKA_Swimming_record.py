@@ -13,10 +13,6 @@ import mplcursors
 import matplotlib.font_manager as fm
 import plotly.express as px   # ← これだけ追加でOK
 
-fm.fontManager.addfont("ipaexg.ttf")
-plt.rcParams["font.family"] = "IPAexGothic"
-
-
 # ---------------------------------------------------------
 # ログイン（パスワード認証）
 # ---------------------------------------------------------
