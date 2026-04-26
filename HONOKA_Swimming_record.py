@@ -341,7 +341,7 @@ options = {
         "text": f"{event} {distance}m（{course}）の記録推移"
     },
 
-    # ← 凡例を ECharts に戻す（タイトルの上に配置）
+    # ★ 凡例をタイトルの上に配置
     "legend": {
         "top": 0,
         "left": "center",
@@ -380,23 +380,27 @@ options = {
     ],
 
     "series": [
-        # ダミー凡例（青）
+        # ★ ダミー凡例（青）
         {
             "name": "長水路",
             "type": "line",
             "data": [],
             "lineStyle": {"color": "#3366FF"},
-            "showSymbol": False
+            "showSymbol": True,
+            "symbol": "circle",
+            "symbolSize": 12
         },
-        # ダミー凡例（赤）
+        # ★ ダミー凡例（赤）
         {
             "name": "短水路",
             "type": "line",
             "data": [],
             "lineStyle": {"color": "#FF3333"},
-            "showSymbol": False
+            "showSymbol": True,
+            "symbol": "circle",
+            "symbolSize": 12
         },
-        # 実データ（線は灰色、点は青/赤）
+        # ★ 実データ（線は灰色、点は青/赤）
         {
             "type": "line",
             "data": series_data,
