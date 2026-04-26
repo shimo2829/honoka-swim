@@ -327,13 +327,6 @@ fig.update_yaxes(
     ticktext=[seconds_to_swim_format(t) for t in tick_vals]
 )
 
-fig.update_yaxes(
-    range=[y_max + 1, y_min - 1],   # ← これが正しい
-    tickmode="array",
-    tickvals=tick_vals,
-    ticktext=[seconds_to_swim_format(t) for t in tick_vals]
-)
-
 # ★ X軸：日付順に固定
 fig.update_xaxes(
     categoryorder="array",
