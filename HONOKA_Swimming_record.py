@@ -315,6 +315,7 @@ if course == "全記録":
         }
         for i in range(len(y_data))
     ]
+    series_name = "長水路 / 短水路"
 else:
     # 単独（長水路 or 短水路）
     series_data = [
@@ -327,6 +328,7 @@ else:
         }
         for i in range(len(y_data))
     ]
+    series_name = course  # ← 長水路 or 短水路
 
 # ---------------------------------------------------------
 # ECharts オプション
@@ -342,6 +344,9 @@ options = {
                 return params[0].data.label;
             }
         """)
+    },
+    "legend": {
+        "data": [series_name]   # ← これで凡例が出る！
     },
     "xAxis": {
         "type": "category",
@@ -363,6 +368,7 @@ options = {
     ],
     "series": [
         {
+            "name": series_name,   # ← ここが超重要！
             "type": "line",
             "data": series_data,
             "smooth": False,
@@ -377,9 +383,6 @@ options = {
     ]
 }
 
-# ---------------------------------------------------------
-# グラフ描画
-# ---------------------------------------------------------
 st_echarts(options=options, height="500px")
 
 # ---------------------------------------------------------
