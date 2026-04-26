@@ -299,41 +299,6 @@ y_min = math.floor(y_min_raw / 2) * 2
 y_max = math.ceil(y_max_raw / 2) * 2
 
 # ---------------------------------------------------------
-# ECharts オプション
-# ---------------------------------------------------------
-options = {
-    "title": {
-        "text": f"{event} {distance}m（{course}）の記録推移"
-    },
-  "tooltip": {
-    "trigger": "axis",
-    "formatter": JsCode("""
-        function (params) {
-            return params[0].data.label;
-        }
-    """)
-},
-
-    "xAxis": {
-        "type": "category",
-        "data": x_data
-    },
-    "yAxis": {
-        "type": "value",
-        "inverse": False,
-        "min": y_min,
-        "max": y_max,
-        "interval": 2,
-        "axisLabel": {
-            "formatter": "{value}"
-        }
-    },
-    "dataZoom": [
-        {"type": "inside"},
-        {"type": "slider"}
-    ],
- 
-# ---------------------------------------------------------
 # プロット色分け（長水路＝青、短水路＝赤）
 # ---------------------------------------------------------
 if course == "全記録":
@@ -361,21 +326,45 @@ else:
         for i in range(len(y_data))
     ]
 
-    
-    "series": [
-    {
-        "type": "line",
-        "data": series_data,
-        "smooth": False,
-        "lineStyle": {"color": "gray", "width": 2}
-    }
-]
-
-            "smooth": False,
-            "lineStyle": {"color": "gray", "width": 2},
-            "itemStyle": {
-                "color": "#FF3333" if course == "短水路" else "#3366FF"
+# ---------------------------------------------------------
+# ECharts オプション
+# ---------------------------------------------------------
+options = {
+    "title": {
+        "text": f"{event} {distance}m（{course}）の記録推移"
+    },
+    "tooltip": {
+        "trigger": "axis",
+        "formatter": JsCode("""
+            function (params) {
+                return params[0].data.label;
             }
+        """)
+    },
+    "xAxis": {
+        "type": "category",
+        "data": x_data
+    },
+    "yAxis": {
+        "type": "value",
+        "inverse": False,
+        "min": y_min,
+        "max": y_max,
+        "interval": 2,
+        "axisLabel": {
+            "formatter": "{value}"
+        }
+    },
+    "dataZoom": [
+        {"type": "inside"},
+        {"type": "slider"}
+    ],
+    "series": [
+        {
+            "type": "line",
+            "data": series_data,
+            "smooth": False,
+            "lineStyle": {"color": "gray", "width": 2}
         }
     ]
 }
