@@ -340,6 +340,15 @@ options = {
     "title": {
         "text": f"{event} {distance}m（{course}）の記録推移"
     },
+
+    # ← 凡例を ECharts に戻す（タイトルの上に配置）
+    "legend": {
+        "top": 0,
+        "left": "center",
+        "data": ["長水路", "短水路"],
+        "textStyle": {"color": "#000"}
+    },
+
     "tooltip": {
         "trigger": "axis",
         "formatter": JsCode("""
@@ -348,10 +357,12 @@ options = {
             }
         """)
     },
+
     "xAxis": {
         "type": "category",
         "data": x_data
     },
+
     "yAxis": {
         "type": "value",
         "inverse": False,
@@ -362,11 +373,30 @@ options = {
             "formatter": y_axis_formatter
         }
     },
+
     "dataZoom": [
         {"type": "inside"},
         {"type": "slider"}
     ],
+
     "series": [
+        # ダミー凡例（青）
+        {
+            "name": "長水路",
+            "type": "line",
+            "data": [],
+            "lineStyle": {"color": "#3366FF"},
+            "showSymbol": False
+        },
+        # ダミー凡例（赤）
+        {
+            "name": "短水路",
+            "type": "line",
+            "data": [],
+            "lineStyle": {"color": "#FF3333"},
+            "showSymbol": False
+        },
+        # 実データ（線は灰色、点は青/赤）
         {
             "type": "line",
             "data": series_data,
@@ -381,15 +411,6 @@ options = {
         }
     ]
 }
-
-# ---------------------------------------------------------
-# Streamlit 側で凡例（青丸・赤丸）
-# ---------------------------------------------------------
-st.markdown("""
-**凡例：**  
-<span style="color:#3366FF; font-size:20px;">●</span> 長水路　　
-<span style="color:#FF3333; font-size:20px;">●</span> 短水路
-""", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # グラフ描画
