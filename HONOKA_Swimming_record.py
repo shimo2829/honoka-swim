@@ -305,15 +305,14 @@ options = {
     "title": {
         "text": f"{event} {distance}m（{course}）の記録推移"
     },
- "tooltip": {
-    "trigger": "axis",
-    "formatter": """
-        function (params) {
-            return params[0].data.label;
-        }
-    """
-},
-
+    "tooltip": {
+        "trigger": "axis",
+        "formatter": """
+            function (params) {
+                return params[0].data.label;
+            }
+        """
+    },
     "xAxis": {
         "type": "category",
         "data": x_data
@@ -323,9 +322,9 @@ options = {
         "inverse": False,
         "min": y_min,
         "max": y_max,
-        "interval": 2,   # ★ 2秒刻み
+        "interval": 2,
         "axisLabel": {
-            "formatter": "{value}"   # ★ 数値のまま表示
+            "formatter": "{value}"
         }
     },
     "dataZoom": [
