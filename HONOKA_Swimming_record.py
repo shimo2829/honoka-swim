@@ -298,7 +298,6 @@ filtered["日付_学年"] = (
     filtered["日付"].dt.strftime("%Y-%m-%d") + "（" + filtered["学年"] + "）"
 )
 
-# 競泳表記のタイム
 filtered["タイム_表示"] = filtered["タイム"].apply(seconds_to_swim_format)
 
 fig = px.scatter(
@@ -307,14 +306,13 @@ fig = px.scatter(
     y="タイム",
     color="長水路or短水路",
     color_discrete_map={"長水路": "blue", "短水路": "red"},
-    hover_data={
-        "タイム_表示": True,   # ← ポップアップはこれだけ
-        "タイム": False,
-        "日付": False,
-        "学年": False,
-        "日付_学年": False,
-        "長水路or短水路": False
-    },
+    hover_data={"タイム_表示": True},
+)
+
+# ★ hovertemplate を上書きして「タイム_表示」だけを表示（ラベルなし）
+fig.update_traces(
+    hovertemplate="%{customdata[0]}",
+    customdata=filtered[["タイム_表示"]],
 )
 
 fig.add_scatter(
@@ -339,6 +337,7 @@ fig.update_yaxes(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
 
 # ---------------------------------------------------------
 # 最新記録
