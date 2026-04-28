@@ -168,64 +168,6 @@ events = ["フリー", "バッタ", "ブレ", "バック", "メドレー"]
 event = st.selectbox("種目を選択してください", events)
 
 # ---------------------------------------------------------
-# 固定ヘッダー
-# ---------------------------------------------------------
-event_colors = {
-    "フリー": "#1E90FF",
-    "バッタ": "#FF8C00",
-    "ブレ":   "#32CD32",
-    "バック": "#8A2BE2",
-    "メドレー": "#DC143C"
-}
-
-header_color = event_colors.get(event, "#000000")
-
-st.markdown(
-    f"""
-    <style>
-        .header-title {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: {header_color};
-            padding: 18px 20px;
-            font-size: 32px;
-            font-weight: bold;
-            color: white;
-            text-align: center;
-            border-bottom: 3px solid #ddd;
-            z-index: 999999;
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-        }}
-
-        @media screen and (max-width: 600px) {{
-            .header-title {{
-                font-size: 20px;
-                padding: 12px 10px;
-                gap: 20px;
-            }}
-            .block-container {{
-                padding-top: 100px !important;
-            }}
-        }}
-
-        .block-container {{
-            padding-top: 140px !important;
-        }}
-    </style>
-
-    <div class="header-title">
-        <span>HONOKA Swimming record</span>
-        <span>{event}</span>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# ---------------------------------------------------------
 # Excel 読み込み
 # ---------------------------------------------------------
 sheet_name = event
@@ -289,7 +231,7 @@ y_data = filtered["タイム"].tolist()
 y_label = filtered["タイム_表示"].tolist()
 
 # ---------------------------------------------------------
-# Y軸レンジ（メドレーは10秒刻み、他は2秒刻み）
+# Y軸レンジ
 # ---------------------------------------------------------
 y_min_raw = min(y_data)
 y_max_raw = max(y_data)
@@ -303,10 +245,8 @@ else:
     y_max = math.ceil(y_max_raw / 2) * 2
     y_interval = 2
 
-from streamlit_echarts import st_echarts, JsCode
-
 # ---------------------------------------------------------
-# 点の色分け（長水路＝青、短水路＝赤）
+# 点の色分け
 # ---------------------------------------------------------
 series_data = [
     {
@@ -320,7 +260,7 @@ series_data = [
 ]
 
 # ---------------------------------------------------------
-# Y軸フォーマッタ（メドレーは分＋秒）
+# Y軸フォーマッタ
 # ---------------------------------------------------------
 if "メドレー" in event:
     y_axis_formatter = JsCode("""
@@ -334,15 +274,9 @@ else:
     y_axis_formatter = "{value}"
 
 # ---------------------------------------------------------
-# ECharts オプション（完全版）
+# ★ ECharts オプション（タイトル削除 → 凡例が最上部に来る）
 # ---------------------------------------------------------
 options = {
-    "title": {
-        "text": f"{event} {distance}m（{course}）の記録推移",
-        "left": "center",
-        "top": 40
-    },
-
     "legend": {
         "top": 0,
         "left": "center",
@@ -413,6 +347,18 @@ options = {
         }
     ]
 }
+
+# ---------------------------------------------------------
+# ★ HTML タイトル（凡例より下に確実に表示される）
+# ---------------------------------------------------------
+st.markdown(
+    f"""
+    <h3 style="text-align:center; margin-top:10px; margin-bottom:10px;">
+        {event} {distance}m（{course}）の記録推移
+    </h3>
+    """,
+    unsafe_allow_html=True
+)
 
 # ---------------------------------------------------------
 # グラフ描画
