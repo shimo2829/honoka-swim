@@ -335,22 +335,23 @@ else:
 
 # ---------------------------------------------------------
 # ECharts オプション（完全版）
-# ---------------------------------------------------------
-options = {
-    "title": {
-        "text": f"{event} {distance}m（{course}）の記録推移",
-        "left": "center",
-        "top": "70px",
-        "padding": [10, 0, 0, 0]
-    },
+"title": {
+    "text": f"{event} {distance}m（{course}）の記録推移",
+    "left": "center",
+    "top": 60,   # ← タイトルを凡例の下に
+},
 
-    "legend": {
-        "top": 0,
-        "left": "center",
-        "padding": [0, 0, 0, 0],
-        "data": ["長水路", "短水路"],
-        "textStyle": {"color": "#000"}
-    },
+"legend": {
+    "type": "plain",
+    "top": 0,          # ← 最上部に固定
+    "left": "center",
+    "orient": "horizontal",
+    "padding": 0,
+    "itemGap": 10,
+    "data": ["長水路", "短水路"],
+    "textStyle": {"color": "#000"},
+    "z": 1000          # ← ★ これが最重要（タイトルより前面に出す）
+},
 
     "tooltip": {
         "trigger": "axis",
