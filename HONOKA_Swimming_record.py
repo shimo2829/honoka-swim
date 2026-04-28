@@ -334,14 +334,17 @@ else:
     y_axis_formatter = "{value}"
 
 # ---------------------------------------------------------
-# ECharts オプション
+# ECharts オプション（完全版）
 # ---------------------------------------------------------
 options = {
+    # ★ タイトルを凡例の下に移動
     "title": {
-        "text": f"{event} {distance}m（{course}）の記録推移"
+        "text": f"{event} {distance}m（{course}）の記録推移",
+        "left": "center",
+        "top": "40px"   # ← タイトルを下へ
     },
 
-    # ★ 凡例をタイトルの上に配置
+    # ★ 凡例を最上部に配置
     "legend": {
         "top": 0,
         "left": "center",
