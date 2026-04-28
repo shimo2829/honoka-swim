@@ -336,21 +336,20 @@ else:
 # ---------------------------------------------------------
 # ECharts オプション（完全版）
 # ---------------------------------------------------------
-options = {
-    # ★ タイトルを凡例の下に強制移動（80px に変更）
-    "title": {
-        "text": f"{event} {distance}m（{course}）の記録推移",
-        "left": "center",
-        "top": "80px"   # ← ここが最重要（40px → 80px）
-    },
+"title": {
+    "text": f"{event} {distance}m（{course}）の記録推移",
+    "left": "center",
+    "top": "70px",     # ← タイトルをさらに下へ
+    "padding": [10, 0, 0, 0]   # ← タイトルの上に余白を作る
+},
 
-    # ★ 凡例を最上部に固定
-    "legend": {
-        "top": 0,
-        "left": "center",
-        "data": ["長水路", "短水路"],
-        "textStyle": {"color": "#000"}
-    },
+"legend": {
+    "top": 0,          # ← 最上部に固定
+    "left": "center",
+    "padding": [0, 0, 0, 0],   # ← 凡例の余白をゼロにして最上部に張り付ける
+    "data": ["長水路", "短水路"],
+    "textStyle": {"color": "#000"}
+},
 
     "tooltip": {
         "trigger": "axis",
