@@ -315,24 +315,29 @@ options = {
     ],
 
     "series": [
+        # ★ ダミー凡例（長水路）
         {
             "name": "長水路",
             "type": "line",
             "data": [],
             "lineStyle": {"color": "#3366FF"},
+            "itemStyle": {"color": "#3366FF"},   # ← これ追加！
             "showSymbol": True,
             "symbol": "circle",
             "symbolSize": 12
         },
+        # ★ ダミー凡例（短水路）
         {
             "name": "短水路",
             "type": "line",
             "data": [],
             "lineStyle": {"color": "#FF3333"},
+            "itemStyle": {"color": "#FF3333"},   # ← これ追加！
             "showSymbol": True,
             "symbol": "circle",
             "symbolSize": 12
         },
+        # ★ 実データ（線は灰色、点は青/赤）
         {
             "type": "line",
             "data": series_data,
