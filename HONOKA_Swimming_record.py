@@ -162,10 +162,68 @@ if local_excel is None:
     st.stop()
 
 # ---------------------------------------------------------
-# 種目選択
+# 種目選択（①）
 # ---------------------------------------------------------
 events = ["フリー", "バッタ", "ブレ", "バック", "メドレー"]
 event = st.selectbox("種目を選択してください", events)
+
+# ---------------------------------------------------------
+# 種目カラー
+# ---------------------------------------------------------
+event_colors = {
+    "フリー": "#1E90FF",
+    "バッタ": "#FF8C00",
+    "ブレ":   "#32CD32",
+    "バック": "#8A2BE2",
+    "メドレー": "#DC143C"
+}
+title_color = event_colors.get(event, "#000000")
+
+# ---------------------------------------------------------
+# 種目 → 英語（ブレだけカタカナ）
+# ---------------------------------------------------------
+event_english = {
+    "フリー": "Free",
+    "バッタ": "Butterfly",
+    "バック": "Backstroke",
+    "メドレー": "Medley",
+    "ブレ": "ブレ"
+}
+event_en = event_english.get(event, event)
+
+# ---------------------------------------------------------
+# ★ 固定ヘッダー（ページ最上部に固定）
+# ---------------------------------------------------------
+st.markdown(
+    f"""
+    <div style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: white;
+        padding: 18px 25px;
+        font-size: 28px;
+        font-weight: bold;
+        border-bottom: 2px solid #ddd;
+        z-index: 9999;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    ">
+        <span>honoKA Swimming Records Dashboard</span>
+        <span style="color:{title_color};">【{event_en}】</span>
+    </div>
+
+    <style>
+        .block-container {{
+            padding-top: 110px;
+        }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 
 # ---------------------------------------------------------
 # Excel 読み込み
