@@ -64,8 +64,10 @@ def download_excel_from_github(repo, file_path, token, local_path="temp.xlsx"):
 # ---------------------------------------------------------
 def update_excel_to_github(local_path, repo, file_path, token, commit_message="Update Excel"):
     url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
-　　with open(local_path, "rb") as f:
+
+    with open(local_path, "rb") as f:
         content = f.read()
+
     encoded = base64.b64encode(content).decode()
 
     res = requests.get(url, headers={"Authorization": f"token {token}"})
