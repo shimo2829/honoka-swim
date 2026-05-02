@@ -47,7 +47,9 @@ GITHUB_FILE_PATH = st.secrets["GITHUB_FILE_PATH"]
 def download_excel_from_github(repo, file_path, token, local_path="temp.xlsx"):
     url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
     headers = {"Authorization": f"token {token}"}
-　　res = requests.get(url, headers=headers)
+
+    res = requests.get(url, headers=headers)
+
     if res.status_code == 200:
         content = base64.b64decode(res.json()["content"])
         with open(local_path, "wb") as f:
@@ -412,22 +414,6 @@ options = {
 # グラフ描画
 # ---------------------------------------------------------
 st_echarts(options=options, height="500px")
-
-# ---------------------------------------------------------
-# 長水路・短水路でデータを分割
-# ---------------------------------------------------------
-long_series = []
-short_series = []
-
-for i in range(len(y_data)):
-    row = {
-        "value": y_data[i],
-        "label": y_label[i]
-    }
-    if filtered["長水路or短水路"].iloc[i] == "長水路":
-        long_series.append(row)
-    else:
-        short_series.append(row)
 
 # ---------------------------------------------------------
 # 新しい記録を追加（折りたたみ）
