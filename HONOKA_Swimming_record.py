@@ -12,26 +12,57 @@ from streamlit_echarts import st_echarts, JsCode
 # ---------------------------------------------------------
 # ログイン（パスワード認証）
 # ---------------------------------------------------------
- <div class="fixed-header">
-        <div class="header-title">HONOKA Swimming Records Dashboard</div>
-        <div class="header-sub">{event} {distance}m 記録推移</div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
 PASSWORD = st.secrets["PASSWORD"]
 
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
+# ---------------------------------------------------------
+# ログイン前ヘッダー（固定）
+# ---------------------------------------------------------
+st.markdown(
+    """
+    <style>
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: white;
+            padding: 20px 30px;
+            border-bottom: 2px solid #ddd;
+            z-index: 1000000;
+        }
+        .header-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
+            color: #000;
+        }
+    </style>
+
+    <div class="fixed-header">
+        <div class="header-title">HONOKA Swimming Records Dashboard</div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# ヘッダー分の余白
+st.markdown("<div style='margin-top:120px;'></div>", unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# パスワード入力
+# ---------------------------------------------------------
 if not st.session_state.authenticated:
     pw = st.text_input("パスワードを入力してください", type="password")
+
     if pw == PASSWORD:
         st.session_state.authenticated = True
         st.rerun()
     elif pw != "0128":
         st.error("パスワードが違います")
+
     st.stop()
 
 # ---------------------------------------------------------
