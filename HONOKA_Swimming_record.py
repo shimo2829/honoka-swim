@@ -12,6 +12,14 @@ from streamlit_echarts import st_echarts, JsCode
 # ---------------------------------------------------------
 # ログイン（パスワード認証）
 # ---------------------------------------------------------
+ <div class="fixed-header">
+        <div class="header-title">HONOKA Swimming Records Dashboard</div>
+        <div class="header-sub">{event} {distance}m 記録推移</div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 PASSWORD = st.secrets["PASSWORD"]
 
 if "authenticated" not in st.session_state:
