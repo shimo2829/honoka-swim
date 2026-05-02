@@ -27,6 +27,14 @@ if not st.session_state.authenticated:
     st.stop()
 
 # ---------------------------------------------------------
+# ページ設定
+# ---------------------------------------------------------
+st.set_page_config(
+    page_title="FUKA Swimming Records",
+    layout="wide"
+)
+
+# ---------------------------------------------------------
 # GitHub secrets 読み込み
 # ---------------------------------------------------------
 GITHUB_TOKEN = st.secrets["GITHUB_TOKEN"]
@@ -39,8 +47,7 @@ GITHUB_FILE_PATH = st.secrets["GITHUB_FILE_PATH"]
 def download_excel_from_github(repo, file_path, token, local_path="temp.xlsx"):
     url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
     headers = {"Authorization": f"token {token}"}
-
-    res = requests.get(url, headers=headers)
+　　res = requests.get(url, headers=headers)
     if res.status_code == 200:
         content = base64.b64decode(res.json()["content"])
         with open(local_path, "wb") as f:
@@ -55,8 +62,7 @@ def download_excel_from_github(repo, file_path, token, local_path="temp.xlsx"):
 # ---------------------------------------------------------
 def update_excel_to_github(local_path, repo, file_path, token, commit_message="Update Excel"):
     url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
-
-    with open(local_path, "rb") as f:
+　　with open(local_path, "rb") as f:
         content = f.read()
     encoded = base64.b64encode(content).decode()
 
@@ -154,18 +160,33 @@ def seconds_to_swim_format(sec):
     return f"{m}'{s:05.2f}"
 
 # ---------------------------------------------------------
-# GitHub から最新 Excel を取得
+# Excel 読み込み
 # ---------------------------------------------------------
 local_excel = download_excel_from_github(GITHUB_REPO, GITHUB_FILE_PATH, GITHUB_TOKEN)
-
 if local_excel is None:
     st.stop()
 
+ ---------------------------------------------------------
+# ★ ページ上部の種目選択（session_state 連動・完全版）
 # ---------------------------------------------------------
-# 種目選択（①）
-# ---------------------------------------------------------
-events = ["フリー", "バッタ", "ブレ", "バック", "メドレー"]
-event = st.selectbox("種目を選択してください", events)
+event_list = ["フリー", "バッタ", "ブレ", "バック", "メドレー"]
+
+# ① rerun の最初に session_state を確定
+if "selected_event" not in st.session_state:
+    st.session_state["selected_event"] = "フリー"
+
+event = st.session_state["selected_event"]
+
+# ② selectbox（key を「event」ではなく「固定文字列」にする）
+event = st.selectbox(
+    "種目を選択してください",
+    event_list,
+    index=event_list.index(event),
+    key="event_selector"   # ← ここを固定にするのが正解
+)
+
+# ③ 選んだ event を保存
+st.session_state["selected_event"] = event
 
 # ---------------------------------------------------------
 # 種目カラー
@@ -180,53 +201,7 @@ event_colors = {
 title_color = event_colors.get(event, "#000000")
 
 # ---------------------------------------------------------
-# 種目 → 英語（ブレだけカタカナ）
-# ---------------------------------------------------------
-event_english = {
-    "フリー": "Free",
-    "バッタ": "Butterfly",
-    "バック": "Backstroke",
-    "メドレー": "Medley",
-    "ブレ": "ブレ"
-}
-event_en = event_english.get(event, event)
-
-# ---------------------------------------------------------
-# ★ 固定ヘッダー（ページ最上部に固定）
-# ---------------------------------------------------------
-st.markdown(
-    f"""
-    <div style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background-color: white;
-        padding: 18px 25px;
-        font-size: 28px;
-        font-weight: bold;
-        border-bottom: 2px solid #ddd;
-        z-index: 9999;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    ">
-        <span>honoKA Swimming Records Dashboard</span>
-        <span style="color:{title_color};">【{event_en}】</span>
-    </div>
-
-    <style>
-        .block-container {{
-            padding-top: 110px;
-        }}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-
-# ---------------------------------------------------------
-# Excel 読み込み
+# Excel 読み込み（距離選択より前に必ず実行）
 # ---------------------------------------------------------
 sheet_name = event
 
@@ -236,7 +211,6 @@ data.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム
 data = normalize_columns(data)
 
 data["タイム"] = data["タイム"].apply(time_to_seconds)
-
 data["距離"] = pd.to_numeric(data["距離"], errors="coerce")
 data = data.dropna(subset=["距離"])
 data["距離"] = data["距離"].astype(int)
@@ -251,12 +225,84 @@ elif event == "ブレ":
 else:
     distance_list = sorted(data["距離"].unique())
 
-distance = st.selectbox("距離を選択してください", distance_list)
+# event が変わったら距離もリセット
+if "selected_distance" not in st.session_state or st.session_state.get("last_event") != event:
+    st.session_state["selected_distance"] = distance_list[0]
+
+distance = st.selectbox(
+    "距離を選択してください",
+    distance_list,
+    key=f"distance_selector_{event}"
+)
+
+st.session_state["selected_distance"] = distance
+st.session_state["last_event"] = event
+
+# ---------------------------------------------------------
+# 固定ヘッダー（色も event に連動）
+# ---------------------------------------------------------
+st.markdown(
+    f"""
+    <style>
+        .stAppViewContainer {{
+            padding-top: 120px !important;
+        }}
+
+        .fixed-header {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: white;
+            padding: 20px 30px;
+            border-bottom: 2px solid #ddd;
+            z-index: 1000000;
+        }}
+
+        .header-title {{
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
+            color: #000;
+        }}
+
+        .header-sub {{
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+            color: {title_color};
+        }}
+
+        /* スマホ最適化 */
+        @media screen and (max-width: 600px) {{
+            .fixed-header {{
+                padding: 10px 15px !important;
+            }}
+            .header-title {{
+                font-size: 20px !important;
+            }}
+            .header-sub {{
+                font-size: 14px !important;
+            }}
+            .stAppViewContainer {{
+                padding-top: 90px !important;
+            }}
+        }}
+    </style>
+
+    <div class="fixed-header">
+        <div class="header-title">FUKA Swimming Records Dashboard</div>
+        <div class="header-sub">{event} {distance}m 記録推移</div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 
 # ---------------------------------------------------------
 # 長水路／短水路
 # ---------------------------------------------------------
-course = st.selectbox("長水路／短水路を選択", ["全記録", "短水路", "長水路"])
+course = st.selectbox("長水路／短水路を選択", ["全記録", "短水路", "長水路"], key="course_selector")
 
 # ---------------------------------------------------------
 # データ絞り込み
@@ -274,9 +320,8 @@ filtered = filtered[filtered["タイム"].notna()]
 if filtered.empty:
     st.error(f"{event} の {distance}m（{course}）のデータがありません")
     st.stop()
-
 # ---------------------------------------------------------
-# ECharts 用データ準備
+# グラフ用データ整形
 # ---------------------------------------------------------
 filtered["日付_学年"] = (
     filtered["日付"].dt.strftime("%Y-%m-%d") + "（" + filtered["学年"] + "）"
@@ -288,13 +333,10 @@ x_data = filtered["日付_学年"].tolist()
 y_data = filtered["タイム"].tolist()
 y_label = filtered["タイム_表示"].tolist()
 
-# ---------------------------------------------------------
-# Y軸レンジ
-# ---------------------------------------------------------
 y_min_raw = min(y_data)
 y_max_raw = max(y_data)
 
-if "メドレー" in event:
+if event == "メドレー":
     y_min = math.floor(y_min_raw / 10) * 10
     y_max = math.ceil(y_max_raw / 10) * 10
     y_interval = 10
@@ -304,12 +346,14 @@ else:
     y_interval = 2
 
 # ---------------------------------------------------------
-# 点の色分け
+# series_data（1本の線、点ごとに色を変える）
 # ---------------------------------------------------------
 series_data = [
     {
         "value": y_data[i],
-        "label": y_label[i],
+        "label": y_label[i],               # 点の上のタイム表示用（残す）
+        "date_grade": x_data[i],           # 日付（学年）
+        "place": filtered["会場"].iloc[i], # 会場
         "itemStyle": {
             "color": "#3366FF" if filtered["長水路or短水路"].iloc[i] == "長水路" else "#FF3333"
         }
@@ -318,21 +362,7 @@ series_data = [
 ]
 
 # ---------------------------------------------------------
-# Y軸フォーマッタ
-# ---------------------------------------------------------
-if "メドレー" in event:
-    y_axis_formatter = JsCode("""
-        function (value) {
-            var min = Math.floor(value / 60);
-            var sec = value % 60;
-            return min + "'" + sec.toFixed(2).padStart(5, '0');
-        }
-    """)
-else:
-    y_axis_formatter = "{value}"
-
-# ---------------------------------------------------------
-# ★ ECharts オプション（タイトル削除 → 凡例が最上部に来る）
+# ECharts options（1本の線に戻す）
 # ---------------------------------------------------------
 options = {
     "legend": {
@@ -341,61 +371,28 @@ options = {
         "data": ["長水路", "短水路"],
         "textStyle": {"color": "#000"}
     },
+   "tooltip": {
+    "trigger": "axis",
+    "formatter": JsCode("""
+        function (params) {
+            const p = params[0].data;
+            return p.date_grade + "<br>" + p.place;
+        }
+    """)
+},
 
-    "tooltip": {
-        "trigger": "axis",
-        "formatter": JsCode("""
-            function (params) {
-                return params[0].data.label;
-            }
-        """)
-    },
-
-    "xAxis": {
-        "type": "category",
-        "data": x_data
-    },
-
+    "xAxis": {"type": "category", "data": x_data},
     "yAxis": {
         "type": "value",
         "inverse": False,
         "min": y_min,
         "max": y_max,
         "interval": y_interval,
-        "axisLabel": {
-            "formatter": y_axis_formatter
-        }
+        "axisLabel": {"formatter": "{value}"}
     },
-
-    "dataZoom": [
-        {"type": "inside"},
-        {"type": "slider"}
-    ],
+    "dataZoom": [{"type": "inside"}, {"type": "slider"}],
 
     "series": [
-        # ★ ダミー凡例（長水路）
-        {
-            "name": "長水路",
-            "type": "line",
-            "data": [],
-            "lineStyle": {"color": "#3366FF"},
-            "itemStyle": {"color": "#3366FF"},   # ← これ追加！
-            "showSymbol": True,
-            "symbol": "circle",
-            "symbolSize": 12
-        },
-        # ★ ダミー凡例（短水路）
-        {
-            "name": "短水路",
-            "type": "line",
-            "data": [],
-            "lineStyle": {"color": "#FF3333"},
-            "itemStyle": {"color": "#FF3333"},   # ← これ追加！
-            "showSymbol": True,
-            "symbol": "circle",
-            "symbolSize": 12
-        },
-        # ★ 実データ（線は灰色、点は青/赤）
         {
             "type": "line",
             "data": series_data,
@@ -412,80 +409,201 @@ options = {
 }
 
 # ---------------------------------------------------------
-# ★ HTML タイトル（凡例より下に確実に表示される）
-# ---------------------------------------------------------
-st.markdown(
-    f"""
-    <h3 style="text-align:center; margin-top:10px; margin-bottom:10px;">
-        {event} {distance}m（{course}）の記録推移
-    </h3>
-    """,
-    unsafe_allow_html=True
-)
-
-# ---------------------------------------------------------
 # グラフ描画
 # ---------------------------------------------------------
 st_echarts(options=options, height="500px")
 
 # ---------------------------------------------------------
-# ベストタイム
+# 長水路・短水路でデータを分割
 # ---------------------------------------------------------
-best_short = data[(data["距離"] == distance) & (data["長水路or短水路"] == "短水路") & (data["タイム"].notna())]
-best_long  = data[(data["距離"] == distance) & (data["長水路or短水路"] == "長水路") & (data["タイム"].notna())]
+long_series = []
+short_series = []
 
-st.subheader("ベストタイム（短水路）")
-if not best_short.empty:
-    t = best_short["タイム"].min()
-    d = best_short.loc[best_short["タイム"].idxmin(), "日付"]
-    st.write(f"ベストタイム：**{seconds_to_swim_format(t)}**")
-    st.write(f"更新日：{d}")
-else:
-    st.write("データなし")
-
-st.subheader("ベストタイム（長水路）")
-if not best_long.empty:
-    t = best_long["タイム"].min()
-    d = best_long.loc[best_long["タイム"].idxmin(), "日付"]
-    st.write(f"ベストタイム：**{seconds_to_swim_format(t)}**")
-    st.write(f"更新日：{d}")
-else:
-    st.write("データなし")
-
-# ---------------------------------------------------------
-# 新しい記録を追加
-# ---------------------------------------------------------
-st.subheader("新しい記録を追加")
-
-with st.form("add_record_form"):
-    new_date = st.date_input("日付")
-    new_grade = st.selectbox("学年", ["小6","中1","中2","中3"])
-    new_distance = st.selectbox("距離", distance_list)
-    new_course = st.selectbox("長水路 or 短水路", ["長水路", "短水路"])
-    new_time_str = st.text_input(
-        "タイム（入力方法）\n\n"
-        "【60秒未満】例：58秒11 → 58.11\n"
-        "【60秒以上】例：1分41秒58 → 1'41\"58\n\n"
-        "※ どちらの形式でも自動で変換されます"
-    )
-    new_place = st.text_input("会場", value="菰野スイミング")
-
-    submitted = st.form_submit_button("追加する")
-
-if submitted:
-    new_time_sec = time_to_seconds(new_time_str)
-
-    if new_time_sec is None:
-        st.error("タイムの形式が正しくありません")
+for i in range(len(y_data)):
+    row = {
+        "value": y_data[i],
+        "label": y_label[i]
+    }
+    if filtered["長水路or短水路"].iloc[i] == "長水路":
+        long_series.append(row)
     else:
-        new_row = pd.DataFrame([{
-            "日付": pd.to_datetime(new_date),
-            "学年": new_grade,
-            "距離": int(new_distance),
-            "長水路or短水路": new_course,
-            "タイム": new_time_sec,
-            "会場": new_place
-        }])
+        short_series.append(row)
+
+# ---------------------------------------------------------
+# 新しい記録を追加（折りたたみ）
+# ---------------------------------------------------------
+with st.expander("＋ 新しい記録を追加（クリックで開く）"):
+
+    st.subheader("新しい記録を追加")
+
+    with st.form("add_record_form"):
+
+        new_event = st.selectbox(
+            "種目を選択してください",
+            event_list,
+            key="new_event_selector"
+        )
+
+        # new_event 用に距離リストを作る
+        new_data = pd.read_excel(local_excel, sheet_name=new_event)
+        new_data = normalize_columns(new_data)
+        new_data["距離"] = pd.to_numeric(new_data["距離"], errors="coerce")
+        new_data = new_data.dropna(subset=["距離"])
+        new_data["距離"] = new_data["距離"].astype(int)
+
+        if new_event == "メドレー":
+            new_distance_list = [200, 400]
+        elif new_event == "ブレ":
+            new_distance_list = [50, 100]
+        else:
+            new_distance_list = sorted(new_data["距離"].unique())
+
+        new_distance = st.selectbox("距離を選択してください", new_distance_list)
+
+        new_date = st.date_input("日付")
+
+        # 学年リスト（修正フォームと統一）
+        grade_list = ["小1","小2","小3","小4","小5","小6","中1","中2","中3"]
+        new_grade = st.selectbox("学年", grade_list)
+
+        new_course = st.selectbox("長水路 or 短水路", ["長水路", "短水路"])
+        new_time_str = st.text_input("タイム")
+        new_place = st.text_input("会場", value="菰野スイミング")
+
+        submitted = st.form_submit_button("追加する")
+
+    if submitted:
+        new_time_sec = time_to_seconds(new_time_str)
+
+        if new_time_sec is None:
+            st.error("タイムの形式が正しくありません")
+        else:
+            new_row = pd.DataFrame([{
+                "日付": pd.to_datetime(new_date),
+                "学年": new_grade,
+                "距離": int(new_distance),
+                "長水路or短水路": new_course,
+                "タイム": new_time_sec,
+                "会場": new_place
+            }])
+
+            try:
+                book = pd.read_excel(local_excel, sheet_name=new_event)
+                book = normalize_columns(book)
+                book = book.iloc[:, :6]
+                book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
+
+                updated = pd.concat([book, new_row], ignore_index=True)
+
+                save_sheet_without_deleting_others(local_excel, new_event, updated)
+
+                update_excel_to_github(
+                    local_path=local_excel,
+                    repo=GITHUB_REPO,
+                    file_path=GITHUB_FILE_PATH,
+                    token=GITHUB_TOKEN,
+                    commit_message=f"Add record: {new_event} {new_distance}m"
+                )
+
+                st.session_state["selected_event"] = new_event
+
+                st.success("記録を追加しました！（GitHub にも反映済み）")
+                st.rerun()
+
+            except Exception as e:
+                st.error(f"Excel 書き込みエラー: {e}")
+
+# ---------------------------------------------------------
+# 記録の修正・削除（折りたたみ）
+# ---------------------------------------------------------
+with st.expander("＋ 記録の修正・削除（クリックで開く）"):
+
+    st.subheader("記録の修正・削除")
+
+    edit_df = filtered.copy().reset_index(drop=True)
+    edit_df["行番号"] = edit_df.index
+
+    st.dataframe(edit_df[["行番号", "日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]])
+
+    target_index = st.number_input(
+        "修正・削除する行番号を入力",
+        min_value=0,
+        max_value=len(edit_df)-1,
+        step=1
+    )
+
+    target_row = edit_df.iloc[target_index]
+
+    st.write("選択中の記録：")
+    st.write(target_row)
+
+    # -------------------------
+    # 修正フォーム
+    # -------------------------
+    with st.form("edit_form"):
+
+        grade_list = ["小1","小2","小3","小4","小5","小6","中1","中2","中3"]
+
+        e_date = st.date_input("日付（修正）", value=target_row["日付"])
+        e_grade = st.selectbox(
+            "学年（修正）",
+            grade_list,
+            index=grade_list.index(target_row["学年"])
+        )
+        e_distance = st.number_input("距離（修正）", value=int(target_row["距離"]))
+        e_course = st.selectbox(
+            "長水路 or 短水路（修正）",
+            ["長水路", "短水路"],
+            index=0 if target_row["長水路or短水路"] == "長水路" else 1
+        )
+        e_time_str = st.text_input("タイム（修正）", value=seconds_to_swim_format(target_row["タイム"]))
+        e_place = st.text_input("会場（修正）", value=target_row["会場"])
+
+        edit_submitted = st.form_submit_button("修正する")
+
+    # -------------------------
+    # 修正処理
+    # -------------------------
+    if edit_submitted:
+
+        new_time_sec = time_to_seconds(e_time_str)
+
+        if new_time_sec is None:
+            st.error("タイムの形式が正しくありません")
+        else:
+            book = pd.read_excel(local_excel, sheet_name=sheet_name)
+            book = normalize_columns(book)
+            book = book.iloc[:, :6]
+            book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
+
+            real_index = filtered.index[target_index]
+
+            book.loc[real_index] = [
+                pd.to_datetime(e_date),
+                e_grade,
+                int(e_distance),
+                e_course,
+                new_time_sec,
+                e_place
+            ]
+
+            save_sheet_without_deleting_others(local_excel, sheet_name, book)
+
+            update_excel_to_github(
+                local_path=local_excel,
+                repo=GITHUB_REPO,
+                file_path=GITHUB_FILE_PATH,
+                token=GITHUB_TOKEN,
+                commit_message=f"Edit record: {event} {distance}m"
+            )
+
+            st.success("修正しました！（GitHub にも反映済み）")
+            st.rerun()
+
+    # -------------------------
+    # 削除ボタン
+    # -------------------------
+    if st.button("この記録を削除する", type="primary"):
 
         try:
             book = pd.read_excel(local_excel, sheet_name=sheet_name)
@@ -493,88 +611,23 @@ if submitted:
             book = book.iloc[:, :6]
             book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 
-            updated = pd.concat([book, new_row], ignore_index=True)
+            real_index = filtered.index[target_index]
 
-            save_sheet_without_deleting_others(local_excel, sheet_name, updated)
+            # 行削除
+            book = book.drop(real_index).reset_index(drop=True)
+
+            save_sheet_without_deleting_others(local_excel, sheet_name, book)
 
             update_excel_to_github(
                 local_path=local_excel,
                 repo=GITHUB_REPO,
                 file_path=GITHUB_FILE_PATH,
                 token=GITHUB_TOKEN,
-                commit_message=f"Add record: {event} {distance}m"
+                commit_message=f"Delete record: {event} {distance}m"
             )
 
-            st.success("記録を追加しました！（GitHub にも反映済み）")
+            st.success("削除しました！（GitHub にも反映済み）")
             st.rerun()
 
         except Exception as e:
-            st.error(f"Excel 書き込みエラー: {e}")
-
-# ---------------------------------------------------------
-# 記録の修正・削除
-# ---------------------------------------------------------
-st.subheader("記録の修正・削除")
-
-edit_df = filtered.copy().reset_index(drop=True)
-edit_df["行番号"] = edit_df.index
-
-st.dataframe(edit_df[["行番号", "日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]])
-
-target_index = st.number_input("修正・削除する行番号を入力", min_value=0, max_value=len(edit_df)-1, step=1)
-
-target_row = edit_df.iloc[target_index]
-
-st.write("選択中の記録：")
-st.write(target_row)
-
-# -------------------------
-# 修正フォーム
-# -------------------------
-with st.form("edit_form"):
-    e_date = st.date_input("日付（修正）", value=target_row["日付"])
-    e_grade = st.selectbox("学年（修正）", ["小1","小2","小3","小4","小5","小6","中1","中2","中3"],
-                           index=["小1","小2","小3","小4","小5","小6","中1","中2","中3"].index(target_row["学年"]))
-    e_distance = st.number_input("距離（修正）", value=int(target_row["距離"]))
-    e_course = st.selectbox("長水路 or 短水路（修正）", ["長水路", "短水路"],
-                            index=0 if target_row["長水路or短水路"]=="長水路" else 1)
-    e_time_str = st.text_input("タイム（修正）", value=seconds_to_swim_format(target_row["タイム"]))
-    e_place = st.text_input("会場（修正）", value=target_row["会場"])
-
-    edit_submitted = st.form_submit_button("修正する")
-
-# -------------------------
-# 修正処理
-# -------------------------
-if edit_submitted:
-    new_time_sec = time_to_seconds(e_time_str)
-
-    if new_time_sec is None:
-        st.error("タイムの形式が正しくありません")
-    else:
-        book = pd.read_excel(local_excel, sheet_name=sheet_name)
-        book = normalize_columns(book)
-        book = book.iloc[:, :6]
-        book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
-
-        book.loc[target_row.name] = [
-            pd.to_datetime(e_date),
-            e_grade,
-            int(e_distance),
-            e_course,
-            new_time_sec,
-            e_place
-        ]
-
-        save_sheet_without_deleting_others(local_excel, sheet_name, book)
-
-        update_excel_to_github(
-            local_path=local_excel,
-            repo=GITHUB_REPO,
-            file_path=GITHUB_FILE_PATH,
-            token=GITHUB_TOKEN,
-            commit_message=f"Edit record: {event} {distance}m"
-        )
-
-        st.success("修正しました！（GitHub にも反映済み）")
-        st.rerun()
+            st.error(f"削除中にエラーが発生しました: {e}")
