@@ -424,16 +424,24 @@ options = {
     """)
 },
 
-    "xAxis": {"type": "category", "data": x_data},
-    "yAxis": {
-        "type": "value",
-        "inverse": False,
-        "min": y_min,
-        "max": y_max,
-        "interval": y_interval,
-        "axisLabel": {"formatter": "{value}"}
-    },
-    "dataZoom": [{"type": "inside"}, {"type": "slider"}],
+  "xAxis": {"type": "category", "data": x_data},
+"yAxis": {
+    "type": "value",
+    "inverse": False,
+    "min": y_min,
+    "max": y_max,
+    "interval": y_interval,
+    "axisLabel": {
+        "formatter": JsCode("""
+            function (value) {
+                const m = Math.floor(value / 60);
+                const s = (value % 60).toFixed(2).padStart(5, '0');
+                return m + "'" + s;
+            }
+        """)
+    }
+},
+"dataZoom": [{"type": "inside"}, {"type": "slider"}],
 
     "series": [
         {
