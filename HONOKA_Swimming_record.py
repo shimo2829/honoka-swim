@@ -295,7 +295,7 @@ st.markdown(
     </style>
 
     <div class="fixed-header">
-        <div class="header-title">FUKA Swimming Records Dashboard</div>
+        <div class="header-title">HONOKA Swimming Records Dashboard</div>
         <div class="header-sub">{event} {distance}m 記録推移</div>
     </div>
     """,
