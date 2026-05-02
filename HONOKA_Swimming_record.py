@@ -479,25 +479,12 @@ with st.expander("＋ 新しい記録を追加（クリックで開く）"):
             key="new_event_selector"
         )
 
-        # ← これが超重要（スペース除去）
-        new_event = new_event.strip().replace("　", "")
-
-        new_data = pd.read_excel(local_excel, sheet_name=new_event)
-        new_data = normalize_columns(new_data)
-        new_data["距離"] = pd.to_numeric(new_data["距離"], errors="coerce")
-        new_data = new_data.dropna(subset=["距離"])
-        new_data["距離"] = new_data["距離"].astype(int)
-
-        if new_event == "メドレー":
-            new_distance_list = [200, 400]
-        elif new_event == "ブレ":
-            new_distance_list = [50, 100]
-        else:
-            new_distance_list = sorted(new_data["距離"].unique())
+        # 全種目で共通の距離リスト
+        new_distance_list = [50, 100, 200, 400]
 
         new_distance = st.selectbox("距離を選択してください", new_distance_list)
-        new_date = st.date_input("日付")
 
+        new_date = st.date_input("日付")
 
         # 学年リスト（修正フォームと統一）
         grade_list = ["小1","小2","小3","小4","小5","小6","中1","中2","中3"]
