@@ -479,7 +479,9 @@ with st.expander("＋ 新しい記録を追加（クリックで開く）"):
             key="new_event_selector"
         )
 
-        # new_event 用に距離リストを作る
+        # ← これが超重要（スペース除去）
+        new_event = new_event.strip().replace("　", "")
+
         new_data = pd.read_excel(local_excel, sheet_name=new_event)
         new_data = normalize_columns(new_data)
         new_data["距離"] = pd.to_numeric(new_data["距離"], errors="coerce")
@@ -494,8 +496,8 @@ with st.expander("＋ 新しい記録を追加（クリックで開く）"):
             new_distance_list = sorted(new_data["距離"].unique())
 
         new_distance = st.selectbox("距離を選択してください", new_distance_list)
-
         new_date = st.date_input("日付")
+
 
         # 学年リスト（修正フォームと統一）
         grade_list = ["小1","小2","小3","小4","小5","小6","中1","中2","中3"]
