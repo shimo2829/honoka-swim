@@ -69,7 +69,7 @@ if not st.session_state.authenticated:
 # ページ設定
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="FUKA Swimming Records",
+    page_title="HONOKA Swimming Records",
     layout="wide"
 )
 
