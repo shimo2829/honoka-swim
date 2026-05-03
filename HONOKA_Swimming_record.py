@@ -471,10 +471,6 @@ with st.expander("＋ 新しい記録を追加（クリックで開く）"):
 
     st.subheader("新しい記録を追加")
 
-with st.expander("＋ 新しい記録を追加（クリックで開く）"):
-
-    st.subheader("新しい記録を追加")
-
     with st.form("add_record_form"):
 
         new_event = st.selectbox(
