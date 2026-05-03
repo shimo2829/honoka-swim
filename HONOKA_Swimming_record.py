@@ -471,63 +471,35 @@ with st.expander("＋ 新しい記録を追加（クリックで開く）"):
 
     st.subheader("新しい記録を追加")
 
-    with st.form("add_record_form"):
+with st.form("add_record_form"):
 
-        new_event = st.selectbox(
-            "種目を選択してください",
-            event_list,
-            key="new_event_selector"
-        )
+    new_event = st.selectbox("種目を選択してください", event_list)
+    new_distance = st.selectbox("距離を選択してください", new_distance_list)
+    new_date = st.date_input("日付")
 
-        # 全種目で共通の距離リスト
-        new_distance_list = [50, 100, 200, 400]
+    grade_list = ["小1","小2","小3","小4","小5","小6","中1","中2","中3"]
+    new_grade = st.selectbox("学年", grade_list)
 
-        new_distance = st.selectbox("距離を選択してください", new_distance_list)
+    new_course = st.selectbox("長水路 or 短水路", ["長水路", "短水路"])
 
-        new_date = st.date_input("日付")
+    # --- タイム入力（分・秒・100分の1秒） ---
+    col1, col2, col3 = st.columns(3)
 
-        # 学年リスト（修正フォームと統一）
-        grade_list = ["小1","小2","小3","小4","小5","小6","中1","中2","中3"]
-        new_grade = st.selectbox("学年", grade_list)
+    with col1:
+        new_min = st.selectbox("分", list(range(0, 10)), index=0)
 
-        new_course = st.selectbox("長水路 or 短水路", ["長水路", "短水路"])
-# -----------------------------
-# タイム入力（分・秒・100分の1秒）
-# -----------------------------
-col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        new_sec = st.selectbox("秒", list(range(0, 60)), index=0)
 
-with col1:
-    new_min = st.selectbox(
-        "分",
-        list(range(0, 10)),
-        index=0,
-        key="new_min"
-    )
+    with col3:
+        new_ms = st.selectbox("100分の1秒", list(range(0, 100)), index=0)
 
-with col2:
-    new_sec = st.selectbox(
-        "秒",
-        list(range(0, 60)),
-        index=0,
-        key="new_sec"
-    )
+    new_time_sec = new_min * 60 + new_sec + new_ms / 100
 
-with col3:
-    new_ms = st.selectbox(
-        "100分の1秒",
-        list(range(0, 100)),
-        index=0,
-        format_func=lambda x: f"{x:02d}",
-        key="new_ms"
-    )
+    new_place = st.text_input("会場", value="菰野スイミング")
 
-# 秒に変換
-new_time_sec = new_min * 60 + new_sec + new_ms / 100
+    submitted = st.form_submit_button("追加する")
 
-
-        new_place = st.text_input("会場", value="菰野スイミング")
-
-        submitted = st.form_submit_button("追加する")
 
     if submitted:
         new_time_sec = time_to_seconds(new_time_str)
