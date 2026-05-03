@@ -573,7 +573,7 @@ with st.expander("＋ 記録の修正・削除（クリックで開く）"):
     st.write("選択中の記録：")
     st.write(target_row)
 
-  # -------------------------
+# -------------------------
 # 修正フォーム
 # -------------------------
 with st.form("edit_form"):
@@ -599,7 +599,6 @@ with st.form("edit_form"):
     current_sec_only = int(current_sec % 60)
     current_ms = int(round((current_sec - int(current_sec)) * 100))
 
-    # --- タイム入力（分・秒・100分の1秒） ---
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -616,7 +615,6 @@ with st.form("edit_form"):
             format_func=lambda x: f"{x:02d}"
         )
 
-    # 秒に変換
     e_time_sec = e_min * 60 + e_sec + e_ms / 100
 
     e_place = st.text_input("会場（修正）", value=target_row["会場"])
@@ -627,34 +625,17 @@ with st.form("edit_form"):
 # 修正処理
 # -------------------------
 if edit_submitted:
-
-    new_time_sec = e_time_sec  # ← ここがポイント
-
-    book = pd.read_excel(local_excel, sheet_name=sheet_name)
-    book = normalize_columns(book)
-    book = book.iloc[:, :6]
-    book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
-
-    real_index = filtered.index[target_index]
-
-    book.loc[real_index] = [
-        pd.to_datetime(e_date),
-        e_grade,
-        int(e_distance),
-        e_course,
-        new_time_sec,
-        e_place
-    ]
-
-    save_sheet_without_deleting_others(local_excel, sheet_name, book)
-
-    update_excel_to_github(
-        local_path=local_excel,
-        repo=GITHUB_REPO,
-        file_path=GITHUB_FILE_PATH,
-        token=GITHUB_TOKEN,
-        commit_message=f"Edit record: {event} {distance}m"
-    )
-
-    st.success("修正しました！（GitHub にも反映済み）")
+    ...
     st.rerun()
+
+# -------------------------
+# 削除ボタン（フォームの外）
+# -------------------------
+if st.button("この記録を削除する", type="primary"):
+
+    try:
+        ...
+        st.rerun()
+
+    except Exception as e:
+        st.error(f"削除中にエラーが発生しました: {e}")
