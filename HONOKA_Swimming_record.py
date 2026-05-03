@@ -514,8 +514,7 @@ with st.expander("＋ 新しい記録を追加（クリックで開く）"):
         submitted = st.form_submit_button("追加する")
 
 
-
-    if submitted:
+if submitted:
 
     # new_time_sec はすでに計算済み（分・秒・100分の1秒 → 秒）
     new_row = pd.DataFrame([{
