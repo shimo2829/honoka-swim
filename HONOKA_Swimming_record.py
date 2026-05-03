@@ -664,7 +664,27 @@ if edit_submitted:
 if st.button("この記録を削除する", type="primary"):
 
     try:
-        ...
+        book = pd.read_excel(local_excel, sheet_name=sheet_name)
+        book = normalize_columns(book)
+        book = book.iloc[:, :6]
+        book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
+
+        real_index = filtered.index[target_index]
+
+        # 行削除
+        book = book.drop(real_index).reset_index(drop=True)
+
+        save_sheet_without_deleting_others(local_excel, sheet_name, book)
+
+        update_excel_to_github(
+            local_path=local_excel,
+            repo=GITHUB_REPO,
+            file_path=GITHUB_FILE_PATH,
+            token=GITHUB_TOKEN,
+            commit_message=f"Delete record: {event} {distance}m"
+        )
+
+        st.success("削除しました！（GitHub にも反映済み）")
         st.rerun()
 
     except Exception as e:
