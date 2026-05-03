@@ -516,45 +516,43 @@ with st.expander("＋ 新しい記録を追加（クリックで開く）"):
 
 
     if submitted:
-        new_time_sec = time_to_seconds(new_time_str)
 
-        if new_time_sec is None:
-            st.error("タイムの形式が正しくありません")
-        else:
-            new_row = pd.DataFrame([{
-                "日付": pd.to_datetime(new_date),
-                "学年": new_grade,
-                "距離": int(new_distance),
-                "長水路or短水路": new_course,
-                "タイム": new_time_sec,
-                "会場": new_place
-            }])
+    # new_time_sec はすでに計算済み（分・秒・100分の1秒 → 秒）
+    new_row = pd.DataFrame([{
+        "日付": pd.to_datetime(new_date),
+        "学年": new_grade,
+        "距離": int(new_distance),
+        "長水路or短水路": new_course,
+        "タイム": new_time_sec,
+        "会場": new_place
+    }])
 
-            try:
-                book = pd.read_excel(local_excel, sheet_name=new_event)
-                book = normalize_columns(book)
-                book = book.iloc[:, :6]
-                book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
+    try:
+        book = pd.read_excel(local_excel, sheet_name=new_event)
+        book = normalize_columns(book)
+        book = book.iloc[:, :6]
+        book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
 
-                updated = pd.concat([book, new_row], ignore_index=True)
+        updated = pd.concat([book, new_row], ignore_index=True)
 
-                save_sheet_without_deleting_others(local_excel, new_event, updated)
+        save_sheet_without_deleting_others(local_excel, new_event, updated)
 
-                update_excel_to_github(
-                    local_path=local_excel,
-                    repo=GITHUB_REPO,
-                    file_path=GITHUB_FILE_PATH,
-                    token=GITHUB_TOKEN,
-                    commit_message=f"Add record: {new_event} {new_distance}m"
-                )
+        update_excel_to_github(
+            local_path=local_excel,
+            repo=GITHUB_REPO,
+            file_path=GITHUB_FILE_PATH,
+            token=GITHUB_TOKEN,
+            commit_message=f"Add record: {new_event} {new_distance}m"
+        )
 
-                st.session_state["selected_event"] = new_event
+        st.session_state["selected_event"] = new_event
 
-                st.success("記録を追加しました！（GitHub にも反映済み）")
-                st.rerun()
+        st.success("記録を追加しました！（GitHub にも反映済み）")
+        st.rerun()
 
-            except Exception as e:
-                st.error(f"Excel 書き込みエラー: {e}")
+    except Exception as e:
+        st.error(f"Excel 書き込みエラー: {e}")
+
 
 # ---------------------------------------------------------
 # 記録の修正・削除（折りたたみ）
