@@ -491,7 +491,40 @@ with st.expander("＋ 新しい記録を追加（クリックで開く）"):
         new_grade = st.selectbox("学年", grade_list)
 
         new_course = st.selectbox("長水路 or 短水路", ["長水路", "短水路"])
-        new_time_str = st.text_input("タイム")
+# -----------------------------
+# タイム入力（分・秒・100分の1秒）
+# -----------------------------
+col1, col2, col3 = st.columns([1, 1, 1])
+
+with col1:
+    new_min = st.selectbox(
+        "分",
+        list(range(0, 10)),
+        index=0,
+        key="new_min"
+    )
+
+with col2:
+    new_sec = st.selectbox(
+        "秒",
+        list(range(0, 60)),
+        index=0,
+        key="new_sec"
+    )
+
+with col3:
+    new_ms = st.selectbox(
+        "100分の1秒",
+        list(range(0, 100)),
+        index=0,
+        format_func=lambda x: f"{x:02d}",
+        key="new_ms"
+    )
+
+# 秒に変換
+new_time_sec = new_min * 60 + new_sec + new_ms / 100
+
+
         new_place = st.text_input("会場", value="菰野スイミング")
 
         submitted = st.form_submit_button("追加する")
