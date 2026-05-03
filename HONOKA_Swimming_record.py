@@ -625,8 +625,38 @@ with st.form("edit_form"):
 # 修正処理
 # -------------------------
 if edit_submitted:
-    ...
+
+    new_time_sec = e_time_sec
+
+    book = pd.read_excel(local_excel, sheet_name=sheet_name)
+    book = normalize_columns(book)
+    book = book.iloc[:, :6]
+    book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
+
+    real_index = filtered.index[target_index]
+
+    book.loc[real_index] = [
+        pd.to_datetime(e_date),
+        e_grade,
+        int(e_distance),
+        e_course,
+        new_time_sec,
+        e_place
+    ]
+
+    save_sheet_without_deleting_others(local_excel, sheet_name, book)
+
+    update_excel_to_github(
+        local_path=local_excel,
+        repo=GITHUB_REPO,
+        file_path=GITHUB_FILE_PATH,
+        token=GITHUB_TOKEN,
+        commit_message=f"Edit record: {event} {distance}m"
+    )
+
+    st.success("修正しました！（GitHub にも反映済み）")
     st.rerun()
+
 
 # -------------------------
 # 削除ボタン（フォームの外）
