@@ -296,7 +296,7 @@ st.markdown(
             top: 0;
             left: 0;
             width: 100%;
-            background-color: white;
+            background-color: #FFB6C1;
             padding: 20px 30px;
             border-bottom: 2px solid #ddd;
             z-index: 1000000;
