@@ -573,97 +573,61 @@ with st.expander("＋ 記録の修正・削除（クリックで開く）"):
     st.write("選択中の記録：")
     st.write(target_row)
 
-# -------------------------
-# 修正フォーム
-# -------------------------
-with st.form("edit_form"):
+    # -------------------------
+    # 修正フォーム（expander の中）
+    # -------------------------
+    with st.form("edit_form"):
 
-    grade_list = ["小1","小2","小3","小4","小5","小6","中1","中2","中3"]
+        grade_list = ["小1","小2","小3","小4","小5","小6","中1","中2","中3"]
 
-    e_date = st.date_input("日付（修正）", value=target_row["日付"])
-    e_grade = st.selectbox(
-        "学年（修正）",
-        grade_list,
-        index=grade_list.index(target_row["学年"])
-    )
-    e_distance = st.number_input("距離（修正）", value=int(target_row["距離"]))
-    e_course = st.selectbox(
-        "長水路 or 短水路（修正）",
-        ["長水路", "短水路"],
-        index=0 if target_row["長水路or短水路"] == "長水路" else 1
-    )
-
-    # --- タイム（修正）を分・秒・100分の1秒に分解 ---
-    current_sec = float(target_row["タイム"])
-    current_min = int(current_sec // 60)
-    current_sec_only = int(current_sec % 60)
-    current_ms = int(round((current_sec - int(current_sec)) * 100))
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        e_min = st.selectbox("分（修正）", list(range(0, 10)), index=current_min)
-
-    with col2:
-        e_sec = st.selectbox("秒（修正）", list(range(0, 60)), index=current_sec_only)
-
-    with col3:
-        e_ms = st.selectbox(
-            "100分の1秒（修正）",
-            list(range(0, 100)),
-            index=current_ms,
-            format_func=lambda x: f"{x:02d}"
+        e_date = st.date_input("日付（修正）", value=target_row["日付"])
+        e_grade = st.selectbox(
+            "学年（修正）",
+            grade_list,
+            index=grade_list.index(target_row["学年"])
+        )
+        e_distance = st.number_input("距離（修正）", value=int(target_row["距離"]))
+        e_course = st.selectbox(
+            "長水路 or 短水路（修正）",
+            ["長水路", "短水路"],
+            index=0 if target_row["長水路or短水路"] == "長水路" else 1
         )
 
-    e_time_sec = e_min * 60 + e_sec + e_ms / 100
+        # --- タイム（修正）を分・秒・100分の1秒に分解 ---
+        current_sec = float(target_row["タイム"])
+        current_min = int(current_sec // 60)
+        current_sec_only = int(current_sec % 60)
+        current_ms = int(round((current_sec - int(current_sec)) * 100))
 
-    e_place = st.text_input("会場（修正）", value=target_row["会場"])
+        col1, col2, col3 = st.columns(3)
 
-    edit_submitted = st.form_submit_button("修正する")
+        with col1:
+            e_min = st.selectbox("分（修正）", list(range(0, 10)), index=current_min)
 
-# -------------------------
-# 修正処理
-# -------------------------
-if edit_submitted:
+        with col2:
+            e_sec = st.selectbox("秒（修正）", list(range(0, 60)), index=current_sec_only)
 
-    new_time_sec = e_time_sec
+        with col3:
+            e_ms = st.selectbox(
+                "100分の1秒（修正）",
+                list(range(0, 100)),
+                index=current_ms,
+                format_func=lambda x: f"{x:02d}"
+            )
 
-    book = pd.read_excel(local_excel, sheet_name=sheet_name)
-    book = normalize_columns(book)
-    book = book.iloc[:, :6]
-    book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
+        e_time_sec = e_min * 60 + e_sec + e_ms / 100
 
-    real_index = filtered.index[target_index]
+        e_place = st.text_input("会場（修正）", value=target_row["会場"])
 
-    book.loc[real_index] = [
-        pd.to_datetime(e_date),
-        e_grade,
-        int(e_distance),
-        e_course,
-        new_time_sec,
-        e_place
-    ]
+        edit_submitted = st.form_submit_button("修正する")
 
-    save_sheet_without_deleting_others(local_excel, sheet_name, book)
+    # -------------------------
+    # 修正処理
+    # -------------------------
+    if edit_submitted:
 
-    update_excel_to_github(
-        local_path=local_excel,
-        repo=GITHUB_REPO,
-        file_path=GITHUB_FILE_PATH,
-        token=GITHUB_TOKEN,
-        commit_message=f"Edit record: {event} {distance}m"
-    )
+        new_time_sec = e_time_sec
 
-    st.success("修正しました！（GitHub にも反映済み）")
-    st.rerun()
-
-
-# -------------------------
-# 削除ボタン（フォームの外）
-# -------------------------
-if st.button("この記録を削除する", type="primary"):
-
-    try:
         book = pd.read_excel(local_excel, sheet_name=sheet_name)
         book = normalize_columns(book)
         book = book.iloc[:, :6]
@@ -671,8 +635,14 @@ if st.button("この記録を削除する", type="primary"):
 
         real_index = filtered.index[target_index]
 
-        # 行削除
-        book = book.drop(real_index).reset_index(drop=True)
+        book.loc[real_index] = [
+            pd.to_datetime(e_date),
+            e_grade,
+            int(e_distance),
+            e_course,
+            new_time_sec,
+            e_place
+        ]
 
         save_sheet_without_deleting_others(local_excel, sheet_name, book)
 
@@ -681,11 +651,39 @@ if st.button("この記録を削除する", type="primary"):
             repo=GITHUB_REPO,
             file_path=GITHUB_FILE_PATH,
             token=GITHUB_TOKEN,
-            commit_message=f"Delete record: {event} {distance}m"
+            commit_message=f"Edit record: {event} {distance}m"
         )
 
-        st.success("削除しました！（GitHub にも反映済み）")
+        st.success("修正しました！（GitHub にも反映済み）")
         st.rerun()
 
-    except Exception as e:
-        st.error(f"削除中にエラーが発生しました: {e}")
+    # -------------------------
+    # 削除ボタン（expander の中・フォームの外）
+    # -------------------------
+    if st.button("この記録を削除する", type="primary"):
+
+        try:
+            book = pd.read_excel(local_excel, sheet_name=sheet_name)
+            book = normalize_columns(book)
+            book = book.iloc[:, :6]
+            book.columns = ["日付", "学年", "距離", "長水路or短水路", "タイム", "会場"]
+
+            real_index = filtered.index[target_index]
+
+            book = book.drop(real_index).reset_index(drop=True)
+
+            save_sheet_without_deleting_others(local_excel, sheet_name, book)
+
+            update_excel_to_github(
+                local_path=local_excel,
+                repo=GITHUB_REPO,
+                file_path=GITHUB_FILE_PATH,
+                token=GITHUB_TOKEN,
+                commit_message=f"Delete record: {event} {distance}m"
+            )
+
+            st.success("削除しました！（GitHub にも反映済み）")
+            st.rerun()
+
+        except Exception as e:
+            st.error(f"削除中にエラーが発生しました: {e}")
