@@ -264,7 +264,7 @@ data["距離"] = data["距離"].astype(int)
 if event == "メドレー":
     distance_list = [200, 400]
 elif event == "ブレ":
-    distance_list = [50, 100]
+    distance_list =  [50, 100, 200, 400]
 else:
     distance_list = sorted(data["距離"].unique())
 
