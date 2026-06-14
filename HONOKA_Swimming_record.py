@@ -601,7 +601,7 @@ with st.expander("＋ 記録の修正・削除（クリックで開く）"):
 
         col1, col2, col3 = st.columns(3)
 
-        wwith col1:
+        with col1:
         max_min = max(10, current_min + 1)
         min_list = list(range(0, max_min))
         e_min = st.selectbox("分（修正）", min_list, index=current_min)
