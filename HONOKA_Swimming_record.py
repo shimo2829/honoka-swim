@@ -601,10 +601,10 @@ with st.expander("＋ 記録の修正・削除（クリックで開く）"):
 
         col1, col2, col3 = st.columns(3)
 
-       with col1:
-          max_min = max(10, current_min + 1)
-          min_list = list(range(0, max_min))
-          e_min = st.selectbox("分（修正）", min_list, index=current_min)
+        with col1:
+            max_min = max(10, current_min + 1)
+            min_list = list(range(0, max_min))
+            e_min = st.selectbox("分（修正）", min_list, index=current_min)
 
         with col2:
             e_sec = st.selectbox("秒（修正）", list(range(0, 60)), index=current_sec_only)
